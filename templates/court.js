@@ -73,10 +73,23 @@
     c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
     c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
   }
-  // 색을 조금 어둡게 (그림자 면에 사용)
-  function shade(hex, k) {
-    var n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
-    return "rgb(" + [r, g, b].map(function (v) { return Math.round(v * k); }).join(",") + ")";
+  // 색 문자열(#rrggbb 또는 rgb(...)) → [r, g, b]
+  function rgbOf(col) {
+    if (col.charAt(0) === "#") { var n = parseInt(col.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; }
+    var m = col.match(/\d+(\.\d+)?/g); return m ? m.slice(0, 3).map(Number) : [0, 0, 0];
+  }
+  // k<1 이면 어둡게(그림자 면), k>1 이면 밝게(빛 받는 면)
+  function shade(col, k) {
+    return "rgb(" + rgbOf(col).map(function (v) { return Math.round(k <= 1 ? v * k : v + (255 - v) * (k - 1)); }).join(",") + ")";
+  }
+  /* 2.5D의 핵심 — 입체 음영 vol(색, 중심 x, y, 크기)
+   * 빛이 왼쪽 위(창 쪽)에서 온다고 보고, 도형 왼쪽 위는 밝게, 오른쪽 아래는 어둡게 칠하는 둥근 그라데이션을 만듭니다.
+   * 평평한 한 가지 색 대신 이걸로 칠하면 공이나 인형처럼 도톰해 보입니다. (반투명 rgba 색은 그대로 둡니다) */
+  function vol(c, col, x, y, r) {
+    if (col.indexOf("rgba") === 0) return col;
+    var g = c.createRadialGradient(x - r * .42, y - r * .5, r * .06, x - r * .12, y - r * .12, r * 1.3);
+    g.addColorStop(0, shade(col, 1.38)); g.addColorStop(.45, col); g.addColorStop(1, shade(col, .56));
+    return g;
   }
 
   /* ── 3. SD 캐릭터 한 명 그리기 ─────────────────────────────
@@ -86,30 +99,35 @@
     var skin = sp.skin || "#f7d9ba", hair = sp.hair || "#1c1512", armor = sp.armor, side = f || 1;
     c.lineJoin = "round"; c.lineCap = "round";
     // 망토(몸 뒤)
-    if (sp.cape) svg(c, "M-12,-33 Q-19,-12 -16,-1 L16,-1 Q19,-12 12,-33 Z", sp.cape, OL, 1.3);
+    if (sp.cape) svg(c, "M-12,-33 Q-19,-12 -16,-1 L16,-1 Q19,-12 12,-33 Z", vol(c, sp.cape, 0, -17, 19), OL, 1.3);
     // 긴 무기는 몸 뒤쪽에 세워 들고 있습니다
     if (sp.hold === "spear" || sp.hold === "glaive") weapon(c, sp, side);
     // 신발
-    ell(c, -5, -2, 4.6, 2.8, "#2a211d", OL, 1); ell(c, 5, -2, 4.6, 2.8, "#2a211d", OL, 1);
+    ell(c, -5, -2, 4.6, 2.8, vol(c, "#3a2e28", -5, -2, 5), OL, 1); ell(c, 5, -2, 4.6, 2.8, vol(c, "#3a2e28", 5, -2, 5), OL, 1);
     // 몸통(옷)
-    svg(c, "M-9,-31 L9,-31 Q12,-16 14,-4 Q0,0 -14,-4 Q-12,-16 -9,-31 Z", sp.robe, OL, 1.4);
+    svg(c, "M-9,-31 L9,-31 Q12,-16 14,-4 Q0,0 -14,-4 Q-12,-16 -9,-31 Z", vol(c, sp.robe, 0, -17, 18), OL, 1.4);
+    svg(c, "M4,-30 Q9,-16 10,-3 L14,-4 Q12,-16 9,-31 Z", "rgba(0,0,0,.13)");                  // 옷 주름(그늘진 쪽)
     if (armor) {
-      svg(c, "M-8.5,-30 L8.5,-30 L9.5,-13 Q0,-11 -9.5,-13 Z", armor, OL, 1.1);                 // 가슴 갑옷
+      svg(c, "M-8.5,-30 L8.5,-30 L9.5,-13 Q0,-11 -9.5,-13 Z", vol(c, armor, 0, -22, 13), OL, 1.1);                 // 가슴 갑옷
       c.strokeStyle = shade(armor, .72); c.lineWidth = .9;
       for (var yy = -26; yy < -13; yy += 3.2) { c.beginPath(); c.moveTo(-8.5, yy); c.lineTo(8.5, yy); c.stroke(); } // 비늘 줄
-      svg(c, "M-12,-10 L12,-10 L13,-4 Q0,-1 -13,-4 Z", shade(armor, .85), OL, 1);            // 허리 아래 갑옷 자락
-      ell(c, 0, -13, 3, 2.2, "#d9b24a", OL, .8);                                            // 허리띠 장식
+      svg(c, "M-12,-10 L12,-10 L13,-4 Q0,-1 -13,-4 Z", vol(c, shade(armor, .85), 0, -7, 14), OL, 1);            // 허리 아래 갑옷 자락
+      ell(c, 0, -13, 3, 2.2, vol(c, "#d9b24a", 0, -13, 3.5), OL, .8);                                            // 허리띠 장식
     } else {
-      svg(c, "M-14,-4 Q0,0 14,-4 L13.4,-7 Q0,-3.5 -13.4,-7 Z", sp.trim);                    // 옷단
+      svg(c, "M-14,-4 Q0,0 14,-4 L13.4,-7 Q0,-3.5 -13.4,-7 Z", vol(c, sp.trim, 0, -5, 15));                    // 옷단
       c.strokeStyle = sp.trim; c.lineWidth = 2.6;
       c.beginPath(); c.moveTo(-6, -31); c.lineTo(1, -21); c.moveTo(6, -31); c.lineTo(-1, -22); c.stroke(); // 여민 깃
       svg(c, "M-10,-18 L10,-18 L10.4,-15 L-10.4,-15 Z", shade(sp.trim, .7));                   // 허리띠
     }
     // 소매·팔
     var sleeve = armor ? shade(armor, .9) : sp.robe;
-    ell(c, -10.5, -21, 4.6, 7.2, sleeve, OL, 1.2); ell(c, 10.5, -21, 4.6, 7.2, sleeve, OL, 1.2);
-    if (armor) { ell(c, -10.5, -28, 5.4, 3.8, armor, OL, 1.1); ell(c, 10.5, -28, 5.4, 3.8, armor, OL, 1.1); } // 어깨 갑옷
+    ell(c, -10.5, -21, 4.6, 7.2, vol(c, sleeve, -10.5, -21, 8), OL, 1.2); ell(c, 10.5, -21, 4.6, 7.2, vol(c, sleeve, 10.5, -21, 8), OL, 1.2);
+    if (armor) {                                                                              // 어깨 갑옷 + 반짝임
+      ell(c, -10.5, -28, 5.4, 3.8, vol(c, armor, -10.5, -28, 6), OL, 1.1); ell(c, 10.5, -28, 5.4, 3.8, vol(c, armor, 10.5, -28, 6), OL, 1.1);
+      ell(c, -12.5, -29.2, 1.8, 1, "rgba(255,255,255,.55)"); ell(c, 8.5, -29.2, 1.8, 1, "rgba(255,255,255,.4)");
+    }
     held(c, sp, side, skin);
+    ell(c, 0, -31, 11, 3.2, "rgba(0,0,0,.2)");                                             // 머리가 몸에 드리운 그늘
     head(c, sp, f || 0, skin, hair);
   }
 
@@ -132,7 +150,7 @@
     if (h === "tablet") {                     // 홀(笏): 문관이 두 손으로 받쳐 드는 판
       c.save(); c.translate(0, -22); c.rotate(-.12 * side);
       svg(c, "M-2,-8 L2,-8 L2.4,6 L-2.4,6 Z", "#efe7d2", OL, 1); c.restore();
-      ell(c, 0, -17, 4.4, 3.2, skin, OL, 1);
+      ell(c, 0, -17, 4.4, 3.2, vol(c, skin, 0, -17, 5.4), OL, 1);
     } else if (h === "fan") {                  // 제갈량의 학우선(깃털 부채)
       var fx = 9 * side;
       c.save(); c.translate(fx, -22); c.rotate(-.35 * side);
@@ -140,20 +158,20 @@
       c.strokeStyle = "rgba(120,125,135,.6)"; c.lineWidth = .7;
       for (var k = -2; k <= 2; k++) { c.beginPath(); c.moveTo(0, 1); c.lineTo(k * 2.6, -16 + Math.abs(k)); c.stroke(); }
       c.fillStyle = "#6a4a2a"; c.fillRect(-1, 1, 2, 5); c.restore();
-      ell(c, fx, -17, 3.4, 3, skin, OL, 1);
+      ell(c, fx, -17, 3.4, 3, vol(c, skin, fx, -17, 4.4), OL, 1);
     } else if (h === "scroll") {               // 마속의 병법서 두루마리
       c.save(); c.translate(0, -19);
       svg(c, "M-8,-3 L8,-3 L8,3 L-8,3 Z", "#efe0b8", OL, 1);
       ell(c, -8, 0, 1.6, 3.4, "#8a5a36", OL, .8); ell(c, 8, 0, 1.6, 3.4, "#8a5a36", OL, .8); c.restore();
-      ell(c, -5, -17, 3, 2.6, skin, OL, 1); ell(c, 5, -17, 3, 2.6, skin, OL, 1);
+      ell(c, -5, -17, 3, 2.6, vol(c, skin, -5, -17, 4), OL, 1); ell(c, 5, -17, 3, 2.6, vol(c, skin, 5, -17, 4), OL, 1);
     } else if (h === "sword") {                // 왕평: 허리에 찬 칼
       c.save(); c.translate(-6 * side, -12); c.rotate(.9 * side);
       c.fillStyle = "#3a2a1e"; c.fillRect(-1.6, -2, 3.2, 20); c.fillStyle = "#d9b24a"; c.fillRect(-3, -3, 6, 2);
       c.restore();
-      ell(c, 11 * side, -16, 3.2, 3, skin, OL, 1); ell(c, -11 * side, -16, 3.2, 3, skin, OL, 1);
+      ell(c, 11 * side, -16, 3.2, 3, vol(c, skin, 11 * side, -16, 4.2), OL, 1); ell(c, -11 * side, -16, 3.2, 3, vol(c, skin, -11 * side, -16, 4.2), OL, 1);
     } else {                                   // 창·언월도를 쥔 손
-      ell(c, 16 * side, -24, 3.4, 3.2, skin, OL, 1);
-      ell(c, -10.5 * side, -16, 3.2, 3, skin, OL, 1);
+      ell(c, 16 * side, -24, 3.4, 3.2, vol(c, skin, 16 * side, -24, 4.4), OL, 1);
+      ell(c, -10.5 * side, -16, 3.2, 3, vol(c, skin, -10.5 * side, -16, 4.2), OL, 1);
     }
   }
 
@@ -164,10 +182,12 @@
       svg(c, "M-9," + (hy - 8) + " Q-17," + (hy + 8) + " -12," + (hy + 24) + " L-9," + (hy + 23) + " Q-13," + (hy + 8) + " -6," + (hy - 7) + " Z", "#23233a");
       svg(c, "M9," + (hy - 8) + " Q17," + (hy + 8) + " 12," + (hy + 24) + " L9," + (hy + 23) + " Q13," + (hy + 8) + " 6," + (hy - 7) + " Z", "#23233a");
     }
-    ell(c, 0, hy - 1, 16, 15.5, hair, OL, 1.4);                                   // 뒷머리
-    ell(c, fx * .35, hy + 2.5, 13.6, 12.6, skin, OL, 1.2);                        // 얼굴
-    c.beginPath(); c.ellipse(0, hy - 1.5, 15.2, 10.5, 0, Math.PI, 0); c.fillStyle = hair; c.fill(); // 앞머리
+    ell(c, 0, hy - 1, 16, 15.5, vol(c, hair, 0, hy - 1, 17), OL, 1.4);            // 뒷머리
+    ell(c, fx * .35, hy + 2.5, 13.6, 12.6, vol(c, skin, fx * .35, hy + 2.5, 15), OL, 1.2); // 얼굴
+    c.beginPath(); c.ellipse(0, hy - 1.5, 15.2, 10.5, 0, Math.PI, 0); c.fillStyle = vol(c, hair, 0, hy - 5, 15); c.fill(); // 앞머리
     svg(c, "M" + (-15 + fx) + "," + (hy - 1) + " Q" + (-9 + fx) + "," + (hy - 5) + " " + (-3 + fx) + "," + (hy - 1) + " Q" + (3 + fx) + "," + (hy - 6) + " " + (9 + fx) + "," + (hy - 1) + " Q" + (13 + fx) + "," + (hy - 4) + " 15.2," + (hy - 1.5) + " L15.2," + (hy - 3) + " L-15.2," + (hy - 3) + " Z", hair);
+    c.strokeStyle = "rgba(255,255,255,.22)"; c.lineWidth = 1.6;                   // 머리카락 윤기
+    c.beginPath(); c.ellipse(-2, hy - 5, 10, 6.5, -.25, Math.PI * 1.08, Math.PI * 1.55); c.stroke();
 
     var ex = 5.2, ey = hy + 4, brow = sp.hair && sp.beard === "grey" ? "#6f6a64" : "#1c1410";
     // 눈썹 (표정의 절반은 눈썹입니다)
@@ -232,111 +252,204 @@
     var k = sp.hat, b = -f * 1.6; // 모자 뒤쪽 장식은 얼굴 반대쪽으로 살짝
     c.save(); c.translate(0, hy);
     if (k === "guan") {            // 관모(문관): 검은 모자 + 뒤로 솟은 판
-      svg(c, "M-13,-5 Q-13,-16 0,-17 Q13,-16 13,-5 Q0,-8 -13,-5 Z", "#1a1a20", OL, 1.1);
-      svg(c, "M" + (b - 6) + ",-14 L" + (b - 4.5) + ",-27 L" + (b + 5.5) + ",-27 L" + (b + 7) + ",-14 Z", "#1a1a20", OL, 1.1);
+      svg(c, "M-13,-5 Q-13,-16 0,-17 Q13,-16 13,-5 Q0,-8 -13,-5 Z", vol(c, "#24242c", 0, -10, 14), OL, 1.1);
+      svg(c, "M" + (b - 6) + ",-14 L" + (b - 4.5) + ",-27 L" + (b + 5.5) + ",-27 L" + (b + 7) + ",-14 Z", vol(c, "#24242c", b, -21, 10), OL, 1.1);
       c.strokeStyle = "#c9a24a"; c.lineWidth = .9; c.beginPath(); c.moveTo(b - 4.8, -24); c.lineTo(b + 5.8, -24); c.stroke();
     } else if (k === "guanjin") {  // 윤건(제갈량): 골이 진 검은 비단 두건
-      svg(c, "M-13,-4 Q-14,-18 -6,-24 L6,-24 Q14,-18 13,-4 Q0,-8 -13,-4 Z", "#23233a", OL, 1.1);
+      svg(c, "M-13,-4 Q-14,-18 -6,-24 L6,-24 Q14,-18 13,-4 Q0,-8 -13,-4 Z", vol(c, "#2c2c48", 0, -14, 15), OL, 1.1);
       c.strokeStyle = "rgba(160,160,200,.45)"; c.lineWidth = .9;
       for (var i = -3; i <= 3; i++) { c.beginPath(); c.moveTo(i * 2.6, -22); c.lineTo(i * 3.3, -6); c.stroke(); }
     } else if (k === "scarf") {    // 복건(선비의 두건) + 뒤로 늘어진 자락
       var s = f ? -f : 1;
       svg(c, "M" + (s * 8) + ",-10 Q" + (s * 18) + ",-4 " + (s * 16) + ",10 L" + (s * 12) + ",8 Q" + (s * 13) + ",-2 " + (s * 4) + ",-8 Z", "#1e1e24", OL, 1);
-      ell(c, 0, -7, 15, 9.5, "#1e1e24", OL, 1.1);
+      ell(c, 0, -7, 15, 9.5, vol(c, "#26262e", 0, -7, 15), OL, 1.1);
     } else if (k === "helmet") {   // 투구(무장) + 술
-      svg(c, "M-15,-5 Q-15,-24 0,-26 Q15,-24 15,-5 L11,-6 Q11,-16 0,-17 Q-11,-16 -11,-6 Z", sp.armor, OL, 1.2);
-      svg(c, "M-12,-17 Q0,-21 12,-17 L12,-14 Q0,-18 -12,-14 Z", "#d9b24a");
+      svg(c, "M-15,-5 Q-15,-24 0,-26 Q15,-24 15,-5 L11,-6 Q11,-16 0,-17 Q-11,-16 -11,-6 Z", vol(c, sp.armor, 0, -16, 17), OL, 1.2);
+      ell(c, -7, -20, 3.2, 1.8, "rgba(255,255,255,.5)");                                  // 투구 반짝임
+      svg(c, "M-12,-17 Q0,-21 12,-17 L12,-14 Q0,-18 -12,-14 Z", vol(c, "#d9b24a", 0, -17, 12));
       c.strokeStyle = "#5a3a22"; c.lineWidth = 1.6; c.beginPath(); c.moveTo(0, -26); c.lineTo(0, -31); c.stroke();
       svg(c, "M0,-31 Q" + (b * 4 - 7) + ",-40 " + (b * 5 - 3) + ",-44 Q" + (b * 2 + 4) + ",-38 2,-30 Z", sp.plume, OL, .9);
     } else if (k === "band") {     // 강유: 상투 + 붉은 머리띠(끈이 뒤로 날림)
       var d = f ? -f : 1;
-      ell(c, 0, -16, 5.2, 5, "#1c1512", OL, 1.1);
+      ell(c, 0, -16, 5.2, 5, vol(c, "#2a201a", 0, -16, 6), OL, 1.1);
       c.fillStyle = sp.band; c.fillRect(-15, -6, 30, 3.6);
       svg(c, "M" + (d * 13) + ",-5 q" + (d * 7) + ",2 " + (d * 10) + ",9 l" + (-d * 3) + ",0 q" + (-d * 2) + ",-5 " + (-d * 7) + ",-7 Z", sp.band);
     }
     c.restore();
   }
 
-  /* ── 4. 배경: 대전 (한 번만 그려 bg 캔버스에 보관) ─────────── */
+  /* ── 4. 배경: 대전 (한 번만 그려 bg 캔버스에 보관) ───────────
+   * 2.5D 느낌을 내는 요소
+   *   • 빛의 방향을 하나로 통일: 햇빛이 왼쪽 벽 창으로 들어옵니다 → 윗면은 밝게, 오른쪽을 향한 면은 어둡게
+   *   • 구석 그늘(AO): 벽과 바닥이 만나는 곳, 단상 둘레를 어둡게 해 바닥이 '안쪽으로 들어가' 보이게
+   *   • 두께가 있는 물건: 들보·굽도리·창턱·2단 단상·촛대·도자기를 상자/원기둥으로 그림
+   *   • 창으로 든 햇살 기둥과 바닥의 빛 웅덩이 (프레임마다 먼지가 떠다님) */
   var K = Math.min(2, window.devicePixelRatio || 1); // 고해상도 화면에서도 선명하게
   var WALL = 150;                                     // 벽 높이(픽셀)
+  var SUN = [[5, 6.6], [8.5, 10.1], [12, 13.6], [15.5, 17.1]]; // 창 자리(벽을 따라 몇 번째 칸부터 몇 번째 칸까지)
+  var DAIS = 16;                                      // 단상 높이(제갈량이 서는 윗단)
+  // 창으로 든 빛이 바닥에 닿는 자리 (왼쪽 벽 창 → 방 안쪽 오른쪽 아래로 비스듬히)
+  function pool(w) { return [iso(.5, w[0] + .6), iso(.5, w[1] + .6), iso(3.8, w[1] + 2.4), iso(3.8, w[0] + 2.4)]; }
+
+  // 상자 하나: 윗면 + 화면 쪽으로 보이는 두 옆면. 빛 방향에 맞춰 왼쪽 앞면은 중간, 오른쪽 앞면은 어둡게
+  function box(c, x0, y0, x1, y1, z0, z1, col) {
+    poly(c, [iso(x0, y1, z0), iso(x1, y1, z0), iso(x1, y1, z1), iso(x0, y1, z1)], shade(col, .72), OL, 1);
+    poly(c, [iso(x1, y0, z0), iso(x1, y1, z0), iso(x1, y1, z1), iso(x1, y0, z1)], shade(col, .5), OL, 1);
+    var a = iso(x0, y0, z1), b = iso(x1, y1, z1);
+    poly(c, [a, iso(x1, y0, z1), b, iso(x0, y1, z1)], lg(c, a[0], a[1], b[0], b[1], [[0, shade(col, 1.18)], [1, col]]), OL, 1);
+  }
+  // 바닥 띠 그늘: at(i)가 돌려주는 가는 띠를 안쪽부터 점점 옅게 겹칩니다
+  function aoStrips(c, n, strip, a) {
+    for (var i = 0; i < n; i++) poly(c, strip(i / n, (i + 1) / n), "rgba(0,0,0," + (a * Math.pow(1 - i / n, 2)).toFixed(3) + ")");
+  }
+
   function background(c) {
     c.fillStyle = "#140c08"; c.fillRect(0, 0, W, H);
-    // 바닥: 나무 마루 (칸마다 색을 살짝 달리해 결을 냅니다)
-    for (var x = 0; x < 22; x++) for (var y = 0; y < 22; y++) {
-      var v = ((x * 7 + y * 13) % 5) / 5, dark = (x + y) % 2;
-      poly(c, [iso(x, y), iso(x + 1, y), iso(x + 1, y + 1), iso(x, y + 1)],
-        "rgb(" + Math.round(104 + v * 14 - dark * 10) + "," + Math.round(66 + v * 9 - dark * 7) + "," + Math.round(40 + v * 6 - dark * 5) + ")",
-        "rgba(40,22,12,.55)", 1);
+    // 바닥: 긴 마루 널 (줄마다 이음새를 엇갈리게, 널마다 색을 살짝 다르게)
+    for (var r = 0; r < 66; r++) {
+      var y0 = r / 3, y1 = (r + 1) / 3, off = (r * 7 % 3) * .7;
+      for (var x = -off; x < 22; x += 2.1) {
+        var h = (Math.sin(r * 12.9898 + x * 78.233) * 43758.5) % 1, v = Math.abs(h);
+        poly(c, [iso(x, y0), iso(x + 2.1, y0), iso(x + 2.1, y1), iso(x, y1)],
+          "rgb(" + Math.round(98 + v * 22) + "," + Math.round(62 + v * 14) + "," + Math.round(38 + v * 9) + ")", "rgba(34,18,9,.7)", .8);
+      }
     }
-    // 뒤쪽 두 벽 (왼쪽 벽: x=0, 오른쪽 벽: y=0)
-    wall(c, function (u, z) { return iso(0, u, z); }, "#6e1d14", "#4a130d");
-    wall(c, function (u, z) { return iso(u, 0, z); }, "#7c2217", "#561710");
+    // 반들반들한 마루에 비친 빛
+    var gl = c.createRadialGradient(480, 300, 20, 480, 300, 330);
+    gl.addColorStop(0, "rgba(255,214,150,.13)"); gl.addColorStop(1, "rgba(255,214,150,0)");
+    c.fillStyle = gl; c.fillRect(0, 0, W, H);
+    // 벽 밑 구석 그늘
+    aoStrips(c, 10, function (a, b) { return [iso(a * 1.4, 0), iso(b * 1.4, 0), iso(b * 1.4, 22), iso(a * 1.4, 22)]; }, .5);
+    aoStrips(c, 10, function (a, b) { return [iso(0, a * 1.4), iso(0, b * 1.4), iso(22, b * 1.4), iso(22, a * 1.4)]; }, .55);
+    // 바닥의 빛 웅덩이 (창살 그림자 줄무늬 포함)
+    c.save(); c.globalCompositeOperation = "lighter";
+    SUN.forEach(function (w) {
+      poly(c, pool(w), "rgba(255,196,118,.16)");
+    });
+    c.restore();
+    SUN.forEach(function (w) {
+      for (var i = 1; i < 5; i++) { var u = w[0] + (w[1] - w[0]) * i / 5; line2(c, iso(.5, u + .6), iso(3.8, u + 2.4), "rgba(40,20,10,.16)", 2.2); }
+    });
+    // 뒤쪽 두 벽 (왼쪽 벽: x=0 — 창으로 햇빛이 들어오는 쪽 / 오른쪽 벽: y=0)
+    wall(c, function (u, z, d) { return iso(d || 0, u, z); }, "#6e1d14", true);
+    wall(c, function (u, z, d) { return iso(u, d || 0, z); }, "#7c2217", false);
     // 붉은 기둥 (벽을 따라)
     [3.5, 7, 10.5, 14, 17.5].forEach(function (k) { pillar(c, iso(.35, k)); pillar(c, iso(k, .35)); });
-    // 융단: 단상 앞에서 화면 아래까지
+    // 융단: 단상 앞에서 화면 아래까지 (가장자리 밑에 얇은 그림자 → 바닥 위에 깔린 두께)
     c.save(); c.beginPath(); c.rect(0, 0, W, H); c.clip();
-    poly(c, [spot(4, -1), spot(4, 1), spot(22, 1), spot(22, -1)], "#9c1f18");
-    poly(c, [spot(4, -1), spot(4, 1), spot(22, 1), spot(22, -1)], null, "#e0b44c", 3);
-    poly(c, [spot(4.2, -.72), spot(4.2, .72), spot(22, .72), spot(22, -.72)], null, "rgba(240,200,110,.55)", 1.2);
-    for (var t = 5; t < 16; t += 1.1) {   // 융단 가운데 금색 무늬
+    var rug = [spot(4.6, -1), spot(4.6, 1), spot(22, 1), spot(22, -1)];
+    poly(c, rug.map(function (p) { return [p[0] + 3, p[1] + 2]; }), "rgba(0,0,0,.35)");
+    poly(c, rug, lg(c, 0, 200, 0, 540, [[0, "#8c1a14"], [1, "#b0281d"]]));
+    poly(c, rug, null, "#e0b44c", 3);
+    poly(c, [spot(4.8, -.72), spot(4.8, .72), spot(22, .72), spot(22, -.72)], null, "rgba(240,200,110,.55)", 1.2);
+    for (var t = 5.6; t < 16; t += 1.1) {  // 융단 가운데 금색 무늬
       var p = spot(t, 0);
       poly(c, [[p[0], p[1] - 6], [p[0] + 11, p[1]], [p[0], p[1] + 6], [p[0] - 11, p[1]]], null, "rgba(236,190,90,.75)", 1.4);
     }
     c.restore();
-    // 단상 (가로세로 0.6~4칸, 높이 16픽셀)
-    var A = .6, B = 4, h = 16;
-    poly(c, [iso(A, B, 0), iso(B, B, 0), iso(B, B, h), iso(A, B, h)], "#5a2a18", OL, 1);   // 왼쪽 앞면
-    poly(c, [iso(B, A, 0), iso(B, B, 0), iso(B, B, h), iso(B, A, h)], "#6e341e", OL, 1);   // 오른쪽 앞면
-    poly(c, [iso(A, A, h), iso(B, A, h), iso(B, B, h), iso(A, B, h)], "#a52a1f", OL, 1);   // 윗면
-    poly(c, [iso(A + .25, A + .25, h), iso(B - .25, A + .25, h), iso(B - .25, B - .25, h), iso(A + .25, B - .25, h)], null, "#e0b44c", 2);
-    // 금박 병풍 (단상 뒤, 두 벽을 따라 ㄱ자로)
-    screen(c, function (u, z) { return iso(.75, .75 + u * 3, z + h); });
-    screen(c, function (u, z) { return iso(.75 + u * 3, .75, z + h); });
+    // 단상: 아랫단(넓고 낮게) + 윗단. 둘레 바닥에 그늘
+    aoStrips(c, 6, function (a, b) { return [iso(.3, 4.7 + a * .8), iso(4.7 + a * .8, 4.7 + a * .8), iso(4.7 + b * .8, 4.7 + b * .8), iso(.3, 4.7 + b * .8)]; }, .45);
+    aoStrips(c, 6, function (a, b) { return [iso(4.7 + a * .8, .3), iso(4.7 + b * .8, .3), iso(4.7 + b * .8, 4.7 + b * .8), iso(4.7 + a * .8, 4.7 + a * .8)]; }, .45);
+    box(c, .3, .3, 4.7, 4.7, 0, 8, "#7a3a20");
+    box(c, .6, .6, 4, 4, 8, DAIS, "#a52a1f");
+    poly(c, [iso(.85, .85, DAIS), iso(3.75, .85, DAIS), iso(3.75, 3.75, DAIS), iso(.85, 3.75, DAIS)], null, "#e0b44c", 2);
+    // 금박 병풍 (윗단 뒤, 두 벽을 따라 ㄱ자로)
+    screen(c, function (u, z) { return iso(.75, .75 + u * 3, z + DAIS); }, .82);
+    screen(c, function (u, z) { return iso(.75 + u * 3, .75, z + DAIS); }, 1);
+    // 청동 촛대 (윗단 앞 모서리 두 곳) — 불꽃은 프레임마다 그립니다
+    CANDLES.forEach(function (q) { candleStand(c, q); });
+    // 청화백자 큰 항아리 (단상 양옆)
+    vase(c, iso(1.2, 5.6)); vase(c, iso(5.6, 1.2));
     // 향로 (단상 앞 융단 위)
-    var q = spot(4.7, 0);
-    ell(c, q[0], q[1], 13, 5, "rgba(0,0,0,.3)");
-    svg(c, "M" + (q[0] - 9) + "," + (q[1] - 14) + " Q" + q[0] + "," + (q[1] + 2) + " " + (q[0] + 9) + "," + (q[1] - 14) + " Z", "#8a6a2a", OL, 1.2);
-    ell(c, q[0], q[1] - 14, 9, 3, "#b08d3a", OL, 1);
-    [-6, 0, 6].forEach(function (dx) { c.strokeStyle = OL; c.lineWidth = 2; c.beginPath(); c.moveTo(q[0] + dx, q[1] - 5); c.lineTo(q[0] + dx * 1.2, q[1] + 1); c.stroke(); });
-    // 전체에 따뜻한 빛
-    c.fillStyle = lg(c, 0, 0, 0, H, [[0, "rgba(255,190,110,.10)"], [.6, "rgba(0,0,0,0)"], [1, "rgba(10,5,2,.35)"]]);
+    var q = spot(5, 0);
+    ell(c, q[0] + 4, q[1] + 2, 14, 5, "rgba(0,0,0,.35)");
+    [-6, 0, 6].forEach(function (dx) { line2(c, [q[0] + dx, q[1] - 6], [q[0] + dx * 1.2, q[1] + 1], "#3a2a14", 2.4); });
+    svg(c, "M" + (q[0] - 10) + "," + (q[1] - 15) + " Q" + q[0] + "," + (q[1] + 3) + " " + (q[0] + 10) + "," + (q[1] - 15) + " Z", vol(c, "#9a7a34", q[0], q[1] - 11, 11), OL, 1.2);
+    ell(c, q[0], q[1] - 15, 10, 3.4, vol(c, "#c9a24a", q[0], q[1] - 15, 10), OL, 1);
+    ell(c, q[0], q[1] - 15, 6, 1.8, "#3a2a14");
+    // 전체 빛: 위(안쪽)는 따뜻한 햇빛 안개, 가장자리는 어둡게(비네트) → 화면에 깊이감
+    c.fillStyle = lg(c, 0, 0, 0, H, [[0, "rgba(255,190,110,.12)"], [.55, "rgba(0,0,0,0)"], [1, "rgba(10,5,2,.3)"]]);
     c.fillRect(0, 0, W, H);
+    var vg = c.createRadialGradient(480, 250, 260, 480, 250, 640);
+    vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,.5)");
+    c.fillStyle = vg; c.fillRect(0, 0, W, H);
   }
-  function wall(c, at, col, low) {
-    poly(c, [at(0, 0), at(22, 0), at(22, WALL), at(0, WALL)], col);
-    poly(c, [at(0, 0), at(22, 0), at(22, 28), at(0, 28)], low);                             // 아래 벽널
-    poly(c, [at(0, WALL - 12), at(22, WALL - 12), at(22, WALL), at(0, WALL)], "#2b120c");  // 위 들보
-    c.strokeStyle = "#d9a441"; c.lineWidth = 2; c.beginPath();
-    var a = at(0, WALL - 12), b = at(22, WALL - 12); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]);
-    a = at(0, 28); b = at(22, 28); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.stroke();
-    // 빛이 드는 창살 창
-    [[5, 6.6], [8.5, 10.1], [12, 13.6], [15.5, 17.1]].forEach(function (w) {
-      poly(c, [at(w[0], 50), at(w[1], 50), at(w[1], 112), at(w[0], 112)], "#f4c77a", "#3a140c", 3);
-      c.strokeStyle = "rgba(90,30,14,.9)"; c.lineWidth = 1.3;
-      for (var i = 1; i < 5; i++) { var u = w[0] + (w[1] - w[0]) * i / 5, p1 = at(u, 50), p2 = at(u, 112); c.beginPath(); c.moveTo(p1[0], p1[1]); c.lineTo(p2[0], p2[1]); c.stroke(); }
-      for (var z = 60; z < 112; z += 10) { var p3 = at(w[0], z), p4 = at(w[1], z); c.beginPath(); c.moveTo(p3[0], p3[1]); c.lineTo(p4[0], p4[1]); c.stroke(); }
+  function line2(c, a, b, col, w) { c.strokeStyle = col; c.lineWidth = w; c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.stroke(); }
+
+  // 벽: at(u, z, d) = 벽을 따라 u칸, 높이 z, 벽에서 방 안쪽으로 d칸 튀어나온 곳
+  function wall(c, at, col, sunny) {
+    var g = lg(c, 0, 330, 0, 0, [[0, shade(col, .55)], [.6, col], [1, shade(col, .8)]]);
+    poly(c, [at(0, 0), at(22, 0), at(22, WALL), at(0, WALL)], g);
+    // 옻칠 판벽: 세로 이음매 + 금색 못
+    for (var u = 1.75; u < 22; u += 3.5) {
+      line2(c, at(u, 30), at(u, WALL - 20), "rgba(30,6,4,.45)", 2);
+      [48, 118].forEach(function (z) { ell(c, at(u, z)[0], at(u, z)[1], 2, 2, vol(c, "#e0b44c", at(u, z)[0], at(u, z)[1], 2.4)); });
+    }
+    // 창: 창틀 → 빛나는 창호지 → 창살 → 튀어나온 창턱(윗면이 보임)
+    SUN.forEach(function (w) {
+      poly(c, [at(w[0] - .15, 44), at(w[1] + .15, 44), at(w[1] + .15, 118), at(w[0] - .15, 118)], "#3a140c");
+      var glow = sunny ? "#ffd998" : "#e9b872";
+      poly(c, [at(w[0], 50), at(w[1], 50), at(w[1], 112), at(w[0], 112)], glow);
+      for (var i = 1; i < 5; i++) { var uu = w[0] + (w[1] - w[0]) * i / 5; line2(c, at(uu, 50), at(uu, 112), "rgba(90,30,14,.9)", 1.3); }
+      for (var z = 60; z < 112; z += 10) line2(c, at(w[0], z), at(w[1], z), "rgba(90,30,14,.9)", 1.3);
+      poly(c, [at(w[0] - .2, 44, 0), at(w[1] + .2, 44, 0), at(w[1] + .2, 44, .22), at(w[0] - .2, 44, .22)], "#8a4a26", OL, .8); // 창턱 윗면
+      poly(c, [at(w[0] - .2, 38, .22), at(w[1] + .2, 38, .22), at(w[1] + .2, 44, .22), at(w[0] - .2, 44, .22)], "#4a2412", OL, .8); // 창턱 앞면
     });
+    // 굽도리(벽 아래 두꺼운 널): 앞면 + 윗면
+    poly(c, [at(0, 0, .14), at(22, 0, .14), at(22, 28, .14), at(0, 28, .14)], shade(col, .5), OL, 1);
+    poly(c, [at(0, 28, 0), at(22, 28, 0), at(22, 28, .14), at(0, 28, .14)], shade(col, 1.15));
+    line2(c, at(0, 24, .14), at(22, 24, .14), "#d9a441", 1.6);
+    // 위 들보: 벽에서 튀어나온 굵은 나무 — 윗면(밝게) + 앞면(어둡게, 금 테) + 들보를 받치는 공포(금색 받침)
+    for (var k = 1.2; k < 22; k += 1.75) {
+      poly(c, [at(k - .2, WALL - 30, .35), at(k + .2, WALL - 30, .35), at(k + .2, WALL - 18, .35), at(k - .2, WALL - 18, .35)], vol(c, "#c99a3a", at(k, WALL - 24, .35)[0], at(k, WALL - 24, .35)[1], 8), OL, .8);
+    }
+    poly(c, [at(0, WALL - 18, .45), at(22, WALL - 18, .45), at(22, WALL, .45), at(0, WALL, .45)], "#2b120c", OL, 1);
+    poly(c, [at(0, WALL, 0), at(22, WALL, 0), at(22, WALL, .45), at(0, WALL, .45)], "#5a2616");
+    line2(c, at(0, WALL - 14, .45), at(22, WALL - 14, .45), "#d9a441", 2);
+    line2(c, at(0, WALL - 4, .45), at(22, WALL - 4, .45), "rgba(217,164,65,.6)", 1);
   }
   function pillar(c, base) {
     var x = base[0], y = base[1], w = 9;
-    c.fillStyle = "rgba(0,0,0,.28)"; c.beginPath(); c.ellipse(x + 4, y + 2, 14, 6, 0, 0, Math.PI * 2); c.fill();
-    c.fillStyle = lg(c, x - w, 0, x + w, 0, [[0, "#5a130d"], [.35, "#c0392b"], [.6, "#a52a1f"], [1, "#4a0f0a"]]);
+    ell(c, x + 6, y + 3, 16, 6, "rgba(0,0,0,.35)");
+    c.fillStyle = lg(c, x - w, 0, x + w, 0, [[0, "#9a2a1e"], [.3, "#d9483a"], [.55, "#a52a1f"], [1, "#3a0a07"]]); // 왼쪽(창 쪽)이 밝은 원기둥
     c.fillRect(x - w, y - WALL - 20, w * 2, WALL + 20);
+    c.fillStyle = "rgba(255,230,200,.25)"; c.fillRect(x - w * .45, y - WALL - 20, 2, WALL + 12);          // 옻칠 반사광
     ell(c, x, y, w, 4.5, "#4a0f0a");
-    c.fillStyle = "#3a2a1a"; c.fillRect(x - w - 3, y - 8, w * 2 + 6, 8);                  // 주춧돌
+    // 주춧돌 (두께 있는 받침)
+    c.fillStyle = lg(c, x - w - 4, 0, x + w + 4, 0, [[0, "#6a5a48"], [1, "#2e2418"]]); c.fillRect(x - w - 4, y - 9, w * 2 + 8, 9);
+    ell(c, x, y - 9, w + 4, 4, "#8a7a64"); ell(c, x, y - 9, w, 3.6, "#4a0f0a");
     c.fillStyle = "#d9a441"; c.fillRect(x - w, y - WALL + 2, w * 2, 5); c.fillRect(x - w, y - 36, w * 2, 3);
   }
-  function screen(c, at) {
+  function screen(c, at, light) {
     var hgt = 84;
-    poly(c, [at(0, 0), at(1, 0), at(1, hgt), at(0, hgt)], "#e6c26a", OL, 2);
+    poly(c, [at(0, 0), at(1, 0), at(1, hgt), at(0, hgt)], shade("#e6c26a", light), OL, 2);
     // 먹으로 그린 산
     c.beginPath(); var s0 = at(0, 18); c.moveTo(s0[0], s0[1]);
     for (var i = 0; i <= 30; i++) { var u = i / 30, p = at(u, 22 + 34 * Math.abs(Math.sin(u * Math.PI * 2.4)) * (1 - .3 * Math.sin(u * 9))); c.lineTo(p[0], p[1]); }
     var e = at(1, 18); c.lineTo(e[0], e[1]); c.closePath(); c.fillStyle = "rgba(70,62,52,.55)"; c.fill();
-    c.strokeStyle = "rgba(90,60,20,.65)"; c.lineWidth = 1.2;
-    for (var k = 1; k < 4; k++) { var a = at(k / 4, 0), b = at(k / 4, hgt); c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.stroke(); } // 병풍 폭 나눔
-    var r1 = at(0, hgt), r2 = at(1, hgt); c.strokeStyle = "#5a2a14"; c.lineWidth = 4; c.beginPath(); c.moveTo(r1[0], r1[1]); c.lineTo(r2[0], r2[1]); c.stroke();
+    for (var k = 1; k < 4; k++) line2(c, at(k / 4, 0), at(k / 4, hgt), "rgba(90,60,20,.65)", 1.2);                // 병풍 폭 나눔
+    for (var j = 1; j < 4; j++) { var a = at(j / 4, 0), b = at(j / 4, hgt); c.fillStyle = "rgba(0,0,0,.12)"; c.fillRect(a[0], b[1], 3, a[1] - b[1]); } // 접힌 골 그늘
+    line2(c, at(0, hgt), at(1, hgt), "#5a2a14", 4);
+  }
+  var CANDLES = [iso(.95, 3.65, DAIS), iso(3.65, .95, DAIS)];
+  function candleStand(c, q) {
+    ell(c, q[0] + 4, q[1] + 1, 9, 3.4, "rgba(0,0,0,.35)");
+    ell(c, q[0], q[1] - 2, 7, 3, vol(c, "#8a6a2a", q[0], q[1] - 2, 7), OL, 1);          // 받침
+    c.fillStyle = lg(c, q[0] - 2, 0, q[0] + 2, 0, [[0, "#d9b24a"], [1, "#5a4418"]]); c.fillRect(q[0] - 1.8, q[1] - 54, 3.6, 52); // 기둥
+    ell(c, q[0], q[1] - 54, 8, 3, vol(c, "#b08d3a", q[0], q[1] - 54, 8), OL, 1);        // 접시
+    c.fillStyle = "#f3ead8"; c.fillRect(q[0] - 2, q[1] - 64, 4, 10);                      // 초
+  }
+  function vase(c, q) {
+    ell(c, q[0] + 6, q[1] + 2, 15, 5, "rgba(0,0,0,.35)");
+    var body = "M" + (q[0] - 6) + "," + (q[1] - 44) + " Q" + (q[0] - 16) + "," + (q[1] - 30) + " " + (q[0] - 9) + "," + (q[1] - 2) + " L" + (q[0] + 9) + "," + (q[1] - 2) + " Q" + (q[0] + 16) + "," + (q[1] - 30) + " " + (q[0] + 6) + "," + (q[1] - 44) + " Z";
+    svg(c, body, vol(c, "#eef0f2", q[0], q[1] - 26, 20), OL, 1.2);
+    c.save(); c.clip(new Path2D(body));
+    c.strokeStyle = "rgba(40,70,150,.75)"; c.lineWidth = 1.6;                          // 청화 무늬
+    for (var i = 0; i < 3; i++) { c.beginPath(); c.moveTo(q[0] - 14, q[1] - 30 + i * 5); c.bezierCurveTo(q[0] - 6, q[1] - 36 + i * 5, q[0] + 4, q[1] - 24 + i * 5, q[0] + 14, q[1] - 30 + i * 5); c.stroke(); }
+    c.fillStyle = "rgba(40,70,150,.7)"; c.fillRect(q[0] - 14, q[1] - 12, 28, 3); c.fillRect(q[0] - 10, q[1] - 42, 20, 2);
+    c.restore();
+    ell(c, q[0], q[1] - 44, 6, 2, "#2a3a6a", OL, 1);
+    ell(c, q[0] - 5, q[1] - 32, 2, 5, "rgba(255,255,255,.6)");                           // 도자기 반짝임
   }
 
   /* ── 5. 매 프레임: 등불·연기 + 인물 + 이름표 + 말풍선 ─────── */
@@ -357,8 +470,31 @@
       c.fillStyle = "#d9a441"; c.fillRect(p[0] - 6, p[1] - 17, 12, 4); c.fillRect(p[0] - 6, p[1] + 13, 12, 4);
       c.strokeStyle = "rgba(120,20,10,.6)"; c.lineWidth = 1; c.beginPath(); c.moveTo(p[0], p[1] - 13); c.lineTo(p[0], p[1] + 13); c.stroke();
     });
+    // 햇살 기둥: 창에서 바닥의 빛 웅덩이까지 비스듬히 (천천히 밝기가 일렁임)
+    c.save(); c.globalCompositeOperation = "lighter";
+    SUN.forEach(function (w, i) {
+      var top = [iso(0, w[0], 112), iso(0, w[1], 112)], fl = pool(w), al = .075 + .025 * Math.sin(t * .6 + i);
+      var g = c.createLinearGradient(top[0][0], top[0][1], fl[2][0], fl[2][1]);
+      g.addColorStop(0, "rgba(255,210,140," + al + ")"); g.addColorStop(1, "rgba(255,210,140,0)");
+      poly(c, [top[0], top[1], iso(0, w[1], 50), fl[2], fl[3], iso(0, w[0], 50)], g);
+      // 빛 속을 떠다니는 먼지
+      for (var k = 0; k < 7; k++) {
+        var ph = (t * .05 + k * .137 + i * .31) % 1, u = w[0] + (w[1] - w[0]) * ((k * .379 + i * .21) % 1);
+        var pz = iso(ph * 3.3, u + ph * 1.8, 112 - ph * 100 + Math.sin(t + k) * 4);
+        ell(c, pz[0], pz[1], 1.1, 1.1, "rgba(255,236,200," + (.5 * Math.sin(ph * Math.PI)).toFixed(2) + ")");
+      }
+    });
+    c.restore();
+    // 촛불 (흔들리는 불꽃 + 둥근 불빛)
+    CANDLES.forEach(function (q, i) {
+      var fx = q[0] + Math.sin(t * 9 + i) * .8, fy = q[1] - 69, fl = .8 + .2 * Math.sin(t * 11 + i * 3);
+      var g = c.createRadialGradient(fx, fy, 1, fx, fy, 34);
+      g.addColorStop(0, "rgba(255,200,110," + (.5 * fl) + ")"); g.addColorStop(1, "rgba(255,160,60,0)");
+      c.fillStyle = g; c.fillRect(fx - 34, fy - 34, 68, 68);
+      ell(c, fx, fy, 2.4, 5 * fl, "#ffb347"); ell(c, fx, fy + 1.2, 1.2, 2.6 * fl, "#fff4c8");
+    });
     // 향 연기
-    var q = spot(4.7, 0);
+    var q = spot(5, 0);
     for (var k = 0; k < 5; k++) {
       var ph = (t * .35 + k / 5) % 1;
       ell(c, q[0] + Math.sin(t * 1.4 + k * 2) * 6 * ph, q[1] - 18 - ph * 70, 3 + ph * 8, 2.5 + ph * 5, "rgba(235,228,215," + (.35 * (1 - ph)) + ")");
@@ -369,7 +505,13 @@
     people.forEach(function (o) {
       var talk = o.n === speaker, bob = still ? 0 : Math.sin(t * 2.2 + o.s.t * 1.7) * .6;
       var hop = talk && !still ? -Math.abs(Math.sin(t * 7)) * 3 : 0;
-      ell(c, o.x, o.y, 15, 5.5, talk ? "rgba(255,210,100,.55)" : "rgba(0,0,0,.32)");     // 발밑 그림자(말하는 사람은 금빛)
+      // 부드러운 그림자: 빛이 왼쪽 위에서 오므로 오른쪽 아래로 비껴 떨어집니다
+      c.save(); c.translate(o.x + 7, o.y + 2); c.scale(1.7, .55);
+      var sg = c.createRadialGradient(0, 0, 1, 0, 0, 15);
+      sg.addColorStop(0, "rgba(0,0,0,.5)"); sg.addColorStop(1, "rgba(0,0,0,0)");
+      c.fillStyle = sg; c.fillRect(-15, -15, 30, 30); c.restore();
+      ell(c, o.x, o.y, 11, 3.6, "rgba(0,0,0,.35)");                                          // 발이 닿은 곳
+      if (talk) ell(c, o.x, o.y, 17, 6, null, "rgba(255,210,100,.9)", 2);                     // 말하는 사람: 금빛 고리
       c.save(); c.translate(o.x, o.y + bob + hop); c.scale(1.05, 1.05);
       chibi(c, o.s, o.s.d < 0 ? 1 : o.s.d > 0 ? -1 : 0);
       c.restore();
