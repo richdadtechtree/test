@@ -2,8 +2,8 @@
  * court.js — 승상부 조회(朝會) 장면: 조조전 느낌의 쿼터뷰 + SD(머리 큰 아기자기한) 캐릭터
  *
  * 화면 구성
- *   ① 캔버스: 대각선 위에서 내려다본 대전(쿼터뷰). 단상 위 제갈량, 붉은 융단 양옆에 장수 9명.
- *      왼쪽 = 문관(장완·비의·동윤·양의·마속), 오른쪽 = 무장(강유·조운·위연·왕평).
+ *   ① 캔버스: 대각선 위에서 내려다본 대전(쿼터뷰). 단상 위 제갈량, 비스듬히 뻗은 붉은 융단 양옆에 한 줄씩 장수 9명.
+ *      위쪽 줄 = 문관(장완·비의·동윤·양의·마속), 아래쪽 줄 = 무장(조운·위연·강유·왕평).
  *   ② 아래 대화창: 말하는 사람의 초상화 + 이름 + 대사. 승상 → 신하들 순서로 차례로 말합니다.
  *      말하는 캐릭터는 머리 위에 '…' 말풍선이 뜨고 통통 튑니다. 대화창을 누르면 다음 대사로 넘어갑니다.
  *
@@ -29,26 +29,29 @@
   /* ── 1. 등장인물 ─────────────────────────────────────────────
    * robe: 옷 색 / trim: 깃·단 색 / armor: 갑옷 색(무장만) / hat: guanjin(윤건)·guan(관모)·scarf(복건)·helmet(투구)·band(머리띠)
    * beard: long·grey·full·short·goatee·mustache·stubble·none / mood: 표정 / hold: 든 물건
-   * t, d: 서 있는 자리 — 단상에서 융단을 따라 t칸 앞, 옆으로 d칸 (음수 = 화면 왼쪽). 두 줄로 가로로 늘어섭니다. */
+   * x, y: 서 있는 바닥 칸 (아래 '쿼터뷰 좌표' 참고) / f: 바라보는 쪽 (-1 화면 왼쪽, 1 오른쪽)
+   * 붉은 융단(y = 4.5~6.5)이 단상에서 화면 오른쪽 아래로 비스듬히 뻗고, 그 양옆에 한 줄씩 섭니다.
+   *   위쪽 줄(y = 3.6) 문관 5명, 아래쪽 줄(y = 7.4) 무장 4명. 단상에 가까울수록 윗자리, x 가 1.6씩 늘며 뒤로.
+   *   (아래쪽 줄은 화면 앞이라 단상과 겹치지 않도록 반 칸 뒤에서 시작합니다)
+   *   신하들은 모두 단상의 승상 쪽(화면 왼쪽 위)을 바라보고, 승상은 신하들 쪽(오른쪽 아래)을 봅니다. */
   var CAST = {
-    "제갈량": { hj: "諸葛亮", robe: "#f5f2ea", trim: "#27335c", hat: "guanjin", beard: "long", mood: "calm", hold: "fan", t: 2.3, d: 0 },
-    "장완": { hj: "蔣琬", robe: "#3f7a52", trim: "#eadcae", hat: "guan", beard: "short", mood: "calm", hold: "tablet", t: 5.6, d: -1.8 },
-    "비의": { hj: "費禕", robe: "#4b8cc4", trim: "#f2e5bb", hat: "guan", beard: "mustache", mood: "happy", hold: "tablet", t: 5.6, d: -3.1 },
-    "동윤": { hj: "董允", robe: "#62437e", trim: "#dcc68c", hat: "guan", beard: "grey", mood: "stern", hold: "tablet", t: 5.6, d: -4.4, hair: "#8f8b86" },
-    "양의": { hj: "楊儀", robe: "#7d6b57", trim: "#dccda3", hat: "guan", beard: "goatee", mood: "sly", hold: "tablet", t: 7.6, d: -2.5 },
-    "마속": { hj: "馬謖", robe: "#2e8984", trim: "#f2e7c2", hat: "scarf", beard: "none", mood: "proud", hold: "scroll", t: 7.6, d: -3.8 },
-    "강유": { hj: "姜維", robe: "#2f4f8f", armor: "#9fb2cc", hat: "band", band: "#cc3328", beard: "none", mood: "eager", hold: "spear", t: 5.6, d: 1.8 },
-    "조운": { hj: "趙雲", robe: "#c9d2de", armor: "#eef1f6", cape: "#fbfbfb", hat: "helmet", plume: "#ffffff", beard: "none", mood: "calm", hold: "spear", t: 5.6, d: 3.1 },
-    "위연": { hj: "魏延", robe: "#5a1d15", armor: "#9a3526", hat: "helmet", plume: "#221a18", beard: "full", mood: "angry", hold: "glaive", t: 5.6, d: 4.4, skin: "#e0ab7f" },
-    "왕평": { hj: "王平", robe: "#4c3b2a", armor: "#86663f", hat: "helmet", plume: "#9b3b2a", beard: "stubble", mood: "calm", hold: "sword", t: 7.6, d: 2.5 },
+    "제갈량": { hj: "諸葛亮", robe: "#f5f2ea", trim: "#27335c", hat: "guanjin", beard: "long", mood: "calm", hold: "fan", x: 2.3, y: 5.5, f: 1 },
+    "장완": { hj: "蔣琬", robe: "#3f7a52", trim: "#eadcae", hat: "guan", beard: "short", mood: "calm", hold: "tablet", x: 5.4, y: 3.6, f: -1 },
+    "비의": { hj: "費禕", robe: "#4b8cc4", trim: "#f2e5bb", hat: "guan", beard: "mustache", mood: "happy", hold: "tablet", x: 7.0, y: 3.6, f: -1 },
+    "동윤": { hj: "董允", robe: "#62437e", trim: "#dcc68c", hat: "guan", beard: "grey", mood: "stern", hold: "tablet", x: 8.6, y: 3.6, f: -1, hair: "#8f8b86" },
+    "양의": { hj: "楊儀", robe: "#7d6b57", trim: "#dccda3", hat: "guan", beard: "goatee", mood: "sly", hold: "tablet", x: 10.2, y: 3.6, f: -1 },
+    "마속": { hj: "馬謖", robe: "#2e8984", trim: "#f2e7c2", hat: "scarf", beard: "none", mood: "proud", hold: "scroll", x: 11.8, y: 3.6, f: -1 },
+    "조운": { hj: "趙雲", robe: "#c9d2de", armor: "#eef1f6", cape: "#fbfbfb", hat: "helmet", plume: "#ffffff", beard: "none", mood: "calm", hold: "spear", x: 6.0, y: 7.4, f: -1 },
+    "위연": { hj: "魏延", robe: "#5a1d15", armor: "#9a3526", hat: "helmet", plume: "#221a18", beard: "full", mood: "angry", hold: "glaive", x: 7.6, y: 7.4, f: -1, skin: "#e0ab7f" },
+    "강유": { hj: "姜維", robe: "#2f4f8f", armor: "#9fb2cc", hat: "band", band: "#cc3328", beard: "none", mood: "eager", hold: "spear", x: 9.2, y: 7.4, f: -1 },
+    "왕평": { hj: "王平", robe: "#4c3b2a", armor: "#86663f", hat: "helmet", plume: "#9b3b2a", beard: "stubble", mood: "calm", hold: "sword", x: 10.8, y: 7.4, f: -1 },
   };
   var OL = "#2a1a12"; // 캐릭터 외곽선 색
 
   /* ── 2. 쿼터뷰 좌표 ──────────────────────────────────────── */
-  var W = 960, H = 540, OX = 480, OY = 105;
+  var W = 960, H = 540, OX = 450, OY = 72; // OX, OY: 가장 안쪽 구석(0,0)이 화면에 놓이는 자리 → 바꾸면 장면 전체가 움직입니다
   function iso(x, y, z) { return [OX + (x - y) * 32, OY + (x + y) * 16 - (z || 0)]; }
-  // 융단 가운데 줄을 따라 t칸 앞으로, 옆으로 d칸(음수=화면 왼쪽) 떨어진 곳
-  function spot(t, d) { return iso(t + d, t - d, 0); }
+  var RUG = 5.5; // 융단 가운데 줄(y). 단상·병풍·촛대도 이 줄을 중심으로 놓입니다
 
   /* 그리기 도우미 */
   function poly(c, pts, fill, stroke, lw) {
@@ -286,7 +289,8 @@
    *   • 창으로 든 햇살 기둥과 바닥의 빛 웅덩이 (프레임마다 먼지가 떠다님) */
   var K = Math.min(2, window.devicePixelRatio || 1); // 고해상도 화면에서도 선명하게
   var WALL = 150;                                     // 벽 높이(픽셀)
-  var SUN = [[5, 6.6], [8.5, 10.1], [12, 13.6], [15.5, 17.1]]; // 창 자리(벽을 따라 몇 번째 칸부터 몇 번째 칸까지)
+  var SUN = [[8.8, 10.4], [12.3, 13.9], [15.8, 17.4]];         // 왼쪽 벽(햇빛 드는 쪽) 창 자리: 벽을 따라 몇 번째 칸부터 몇 번째 칸까지
+  var RWIN = [[5, 6.6], [8.5, 10.1], [12, 13.6], [15.5, 17.1]]; // 오른쪽 벽 창 자리
   var DAIS = 16;                                      // 단상 높이(제갈량이 서는 윗단)
   // 창으로 든 빛이 바닥에 닿는 자리 (왼쪽 벽 창 → 방 안쪽 오른쪽 아래로 비스듬히)
   function pool(w) { return [iso(.5, w[0] + .6), iso(.5, w[1] + .6), iso(3.8, w[1] + 2.4), iso(3.8, w[0] + 2.4)]; }
@@ -331,37 +335,38 @@
       for (var i = 1; i < 5; i++) { var u = w[0] + (w[1] - w[0]) * i / 5; line2(c, iso(.5, u + .6), iso(3.8, u + 2.4), "rgba(40,20,10,.16)", 2.2); }
     });
     // 뒤쪽 두 벽 (왼쪽 벽: x=0 — 창으로 햇빛이 들어오는 쪽 / 오른쪽 벽: y=0)
-    wall(c, function (u, z, d) { return iso(d || 0, u, z); }, "#6e1d14", true);
-    wall(c, function (u, z, d) { return iso(u, d || 0, z); }, "#7c2217", false);
+    wall(c, function (u, z, d) { return iso(d || 0, u, z); }, "#6e1d14", true, SUN);
+    wall(c, function (u, z, d) { return iso(u, d || 0, z); }, "#7c2217", false, RWIN);
     // 붉은 기둥 (벽을 따라)
-    [3.5, 7, 10.5, 14, 17.5].forEach(function (k) { pillar(c, iso(.35, k)); pillar(c, iso(k, .35)); });
+    [2.4, 8.2, 11.6, 15.1, 18.6].forEach(function (k) { pillar(c, iso(.35, k)); }); // 왼쪽 벽: 단상(병풍) 양옆 + 창 사이
+    [3.5, 7, 10.5, 14, 17.5].forEach(function (k) { pillar(c, iso(k, .35)); });
     // 융단: 단상 앞에서 화면 아래까지 (가장자리 밑에 얇은 그림자 → 바닥 위에 깔린 두께)
     c.save(); c.beginPath(); c.rect(0, 0, W, H); c.clip();
-    var rug = [spot(4.6, -1), spot(4.6, 1), spot(22, 1), spot(22, -1)];
+    var rug = [iso(4.7, RUG - 1), iso(4.7, RUG + 1), iso(22, RUG + 1), iso(22, RUG - 1)];
     poly(c, rug.map(function (p) { return [p[0] + 3, p[1] + 2]; }), "rgba(0,0,0,.35)");
     poly(c, rug, lg(c, 0, 200, 0, 540, [[0, "#8c1a14"], [1, "#b0281d"]]));
     poly(c, rug, null, "#e0b44c", 3);
-    poly(c, [spot(4.8, -.72), spot(4.8, .72), spot(22, .72), spot(22, -.72)], null, "rgba(240,200,110,.55)", 1.2);
-    for (var t = 5.6; t < 16; t += 1.1) {  // 융단 가운데 금색 무늬
-      var p = spot(t, 0);
-      poly(c, [[p[0], p[1] - 6], [p[0] + 11, p[1]], [p[0], p[1] + 6], [p[0] - 11, p[1]]], null, "rgba(236,190,90,.75)", 1.4);
-    }
+    poly(c, [iso(4.9, RUG - .72), iso(4.9, RUG + .72), iso(22, RUG + .72), iso(22, RUG - .72)], null, "rgba(240,200,110,.55)", 1.2);
+    for (var t = 5.8; t < 18; t += 1.1)    // 융단 가운데 금색 마름모 무늬 (바닥 칸 방향에 맞춰 눕힘)
+      poly(c, [iso(t - .35, RUG), iso(t, RUG - .35), iso(t + .35, RUG), iso(t, RUG + .35)], null, "rgba(236,190,90,.75)", 1.4);
     c.restore();
-    // 단상: 아랫단(넓고 낮게) + 윗단. 둘레 바닥에 그늘
-    aoStrips(c, 6, function (a, b) { return [iso(.3, 4.7 + a * .8), iso(4.7 + a * .8, 4.7 + a * .8), iso(4.7 + b * .8, 4.7 + b * .8), iso(.3, 4.7 + b * .8)]; }, .45);
-    aoStrips(c, 6, function (a, b) { return [iso(4.7 + a * .8, .3), iso(4.7 + b * .8, .3), iso(4.7 + b * .8, 4.7 + b * .8), iso(4.7 + a * .8, 4.7 + a * .8)]; }, .45);
-    box(c, .3, .3, 4.7, 4.7, 0, 8, "#7a3a20");
-    box(c, .6, .6, 4, 4, 8, DAIS, "#a52a1f");
-    poly(c, [iso(.85, .85, DAIS), iso(3.75, .85, DAIS), iso(3.75, 3.75, DAIS), iso(.85, 3.75, DAIS)], null, "#e0b44c", 2);
-    // 금박 병풍 (윗단 뒤, 두 벽을 따라 ㄱ자로)
-    screen(c, function (u, z) { return iso(.75, .75 + u * 3, z + DAIS); }, .82);
-    screen(c, function (u, z) { return iso(.75 + u * 3, .75, z + DAIS); }, 1);
+    // 단상: 왼쪽 벽 앞, 융단 머리. 아랫단(넓고 낮게) + 윗단. 보이는 두 면 앞 바닥에 그늘
+    var y0 = RUG - 2, y1 = RUG + 2;
+    aoStrips(c, 6, function (a, b) { return [iso(4.7 + a * .8, y0), iso(4.7 + b * .8, y0), iso(4.7 + b * .8, y1 + b * .8), iso(4.7 + a * .8, y1 + a * .8)]; }, .45);
+    aoStrips(c, 6, function (a, b) { return [iso(.3, y1 + a * .8), iso(4.7 + a * .8, y1 + a * .8), iso(4.7 + b * .8, y1 + b * .8), iso(.3, y1 + b * .8)]; }, .45);
+    box(c, .3, y0, 4.7, y1, 0, 8, "#7a3a20");
+    box(c, .6, y0 + .3, 4, y1 - .3, 8, DAIS, "#a52a1f");
+    poly(c, [iso(.85, y0 + .55, DAIS), iso(3.75, y0 + .55, DAIS), iso(3.75, y1 - .55, DAIS), iso(.85, y1 - .55, DAIS)], null, "#e0b44c", 2);
+    // 금박 병풍: 윗단 뒤 벽 앞에 넓게 한 폭 + 양쪽 날개 (뒤 날개 → 가운데 → 앞 날개 순서로 그려야 겹침이 맞습니다)
+    screen(c, function (u, z) { return iso(.75 + u * .9, y0 + .4, z + DAIS); }, 1);
+    screen(c, function (u, z) { return iso(.75, y0 + .4 + u * 3.2, z + DAIS); }, .82);
+    screen(c, function (u, z) { return iso(.75 + u * .9, y1 - .4, z + DAIS); }, 1);
     // 청동 촛대 (윗단 앞 모서리 두 곳) — 불꽃은 프레임마다 그립니다
     CANDLES.forEach(function (q) { candleStand(c, q); });
-    // 청화백자 큰 항아리 (단상 양옆)
-    vase(c, iso(1.2, 5.6)); vase(c, iso(5.6, 1.2));
+    // 청화백자 큰 항아리 (단상 양옆 바닥)
+    vase(c, iso(1.1, y0 - .9)); vase(c, iso(1.1, y1 + .9));
     // 향로 (단상 앞 융단 위)
-    var q = spot(5, 0);
+    var q = iso(5.1, RUG);
     ell(c, q[0] + 4, q[1] + 2, 14, 5, "rgba(0,0,0,.35)");
     [-6, 0, 6].forEach(function (dx) { line2(c, [q[0] + dx, q[1] - 6], [q[0] + dx * 1.2, q[1] + 1], "#3a2a14", 2.4); });
     svg(c, "M" + (q[0] - 10) + "," + (q[1] - 15) + " Q" + q[0] + "," + (q[1] + 3) + " " + (q[0] + 10) + "," + (q[1] - 15) + " Z", vol(c, "#9a7a34", q[0], q[1] - 11, 11), OL, 1.2);
@@ -377,7 +382,7 @@
   function line2(c, a, b, col, w) { c.strokeStyle = col; c.lineWidth = w; c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.stroke(); }
 
   // 벽: at(u, z, d) = 벽을 따라 u칸, 높이 z, 벽에서 방 안쪽으로 d칸 튀어나온 곳
-  function wall(c, at, col, sunny) {
+  function wall(c, at, col, sunny, wins) {
     var g = lg(c, 0, 330, 0, 0, [[0, shade(col, .55)], [.6, col], [1, shade(col, .8)]]);
     poly(c, [at(0, 0), at(22, 0), at(22, WALL), at(0, WALL)], g);
     // 옻칠 판벽: 세로 이음매 + 금색 못
@@ -386,7 +391,7 @@
       [48, 118].forEach(function (z) { ell(c, at(u, z)[0], at(u, z)[1], 2, 2, vol(c, "#e0b44c", at(u, z)[0], at(u, z)[1], 2.4)); });
     }
     // 창: 창틀 → 빛나는 창호지 → 창살 → 튀어나온 창턱(윗면이 보임)
-    SUN.forEach(function (w) {
+    wins.forEach(function (w) {
       poly(c, [at(w[0] - .15, 44), at(w[1] + .15, 44), at(w[1] + .15, 118), at(w[0] - .15, 118)], "#3a140c");
       var glow = sunny ? "#ffd998" : "#e9b872";
       poly(c, [at(w[0], 50), at(w[1], 50), at(w[1], 112), at(w[0], 112)], glow);
@@ -431,7 +436,7 @@
     for (var j = 1; j < 4; j++) { var a = at(j / 4, 0), b = at(j / 4, hgt); c.fillStyle = "rgba(0,0,0,.12)"; c.fillRect(a[0], b[1], 3, a[1] - b[1]); } // 접힌 골 그늘
     line2(c, at(0, hgt), at(1, hgt), "#5a2a14", 4);
   }
-  var CANDLES = [iso(.95, 3.65, DAIS), iso(3.65, .95, DAIS)];
+  var CANDLES = [iso(3.65, RUG - 1.35, DAIS), iso(3.65, RUG + 1.35, DAIS)];
   function candleStand(c, q) {
     ell(c, q[0] + 4, q[1] + 1, 9, 3.4, "rgba(0,0,0,.35)");
     ell(c, q[0], q[1] - 2, 7, 3, vol(c, "#8a6a2a", q[0], q[1] - 2, 7), OL, 1);          // 받침
@@ -454,7 +459,7 @@
 
   /* ── 5. 매 프레임: 등불·연기 + 인물 + 이름표 + 말풍선 ─────── */
   var NAMES = Object.keys(CAST), speaker = "", ctx = null, bg = null;
-  var LANTERNS = [[1.2, 6, 170], [6, 1.2, 170], [1.2, 12, 170], [12, 1.2, 170]].map(function (l) { return iso(l[0], l[1], l[2]); });
+  var LANTERNS = [[1.2, 9.6, 135], [1.2, 14, 135], [6, 1.2, 135], [12, 1.2, 135]].map(function (l) { return iso(l[0], l[1], l[2]); });
   function frame(ms) {
     var c = ctx, t = ms / 1000;
     c.setTransform(K, 0, 0, K, 0, 0);
@@ -494,16 +499,16 @@
       ell(c, fx, fy, 2.4, 5 * fl, "#ffb347"); ell(c, fx, fy + 1.2, 1.2, 2.6 * fl, "#fff4c8");
     });
     // 향 연기
-    var q = spot(5, 0);
+    var q = iso(5.1, RUG);
     for (var k = 0; k < 5; k++) {
       var ph = (t * .35 + k / 5) % 1;
       ell(c, q[0] + Math.sin(t * 1.4 + k * 2) * 6 * ph, q[1] - 18 - ph * 70, 3 + ph * 8, 2.5 + ph * 5, "rgba(235,228,215," + (.35 * (1 - ph)) + ")");
     }
     // 인물: 뒤(화면 위)에 있는 사람부터 그립니다
-    var people = NAMES.map(function (n) { var s = CAST[n]; var p = spot(s.t, s.d); return { n: n, s: s, x: p[0], y: p[1] - (n === "제갈량" ? 16 : 0) }; })
+    var people = NAMES.map(function (n) { var s = CAST[n]; var p = iso(s.x, s.y); return { n: n, s: s, x: p[0], y: p[1] - (n === "제갈량" ? 16 : 0) }; })
       .sort(function (a, b) { return a.y - b.y; });
     people.forEach(function (o) {
-      var talk = o.n === speaker, bob = still ? 0 : Math.sin(t * 2.2 + o.s.t * 1.7) * .6;
+      var talk = o.n === speaker, bob = still ? 0 : Math.sin(t * 2.2 + o.s.x * 1.7) * .6;
       var hop = talk && !still ? -Math.abs(Math.sin(t * 7)) * 3 : 0;
       // 부드러운 그림자: 빛이 왼쪽 위에서 오므로 오른쪽 아래로 비껴 떨어집니다
       c.save(); c.translate(o.x + 7, o.y + 2); c.scale(1.7, .55);
@@ -513,7 +518,7 @@
       ell(c, o.x, o.y, 11, 3.6, "rgba(0,0,0,.35)");                                          // 발이 닿은 곳
       if (talk) ell(c, o.x, o.y, 17, 6, null, "rgba(255,210,100,.9)", 2);                     // 말하는 사람: 금빛 고리
       c.save(); c.translate(o.x, o.y + bob + hop); c.scale(1.05, 1.05);
-      chibi(c, o.s, o.s.d < 0 ? 1 : o.s.d > 0 ? -1 : 0);
+      chibi(c, o.s, o.s.f);
       c.restore();
       if (talk) dots(c, o.x, o.y + hop - 104, t);
     });
