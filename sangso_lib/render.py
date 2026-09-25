@@ -9,6 +9,7 @@ render.py — Claude가 써 준 JSON을 두루마리 모양 HTML로 바꾸고, �
 from __future__ import annotations
 
 import html
+import json
 import logging
 import os
 import platform
@@ -59,6 +60,12 @@ def render(data: dict, day: date, out_dir: Path, template: Path, engine_label: s
     nxt = [d for d in days if d > iso]
 
     weekday = "월화수목금토일"[day.weekday()]
+    # 오늘의 한마디: 예전 상소(이 기능 이전)에는 없으므로 한 구절 풀이로 대신합니다
+    one_liner = data.get("one_liner") or motto.get("meaning") or ""
+    court = {"one_liner": one_liner, "task_cc": tasks.get("claude_code", ""), "task_life": tasks.get("life", "")}
+    # </script> 같은 문자열이 글에 섞여도 스크립트가 끊기지 않도록 "</" 를 바꿔 둡니다
+    court_json = json.dumps(court, ensure_ascii=False).replace("</", "<\\/")
+    court_script = (template.parent / "court.js").read_text(encoding="utf-8")
     page = Template(template.read_text(encoding="utf-8")).safe_substitute(
         date_iso=iso,
         date_short=f"{day:%m월 %d일}",
@@ -81,6 +88,9 @@ def render(data: dict, day: date, out_dir: Path, template: Path, engine_label: s
         c1=f"{c1:,}", c2=f"{c2:,}", ctotal=f"{c1 + c2:,}",
         engine=_esc(engine_label),
         notice=_esc(notice),
+        one_liner=_esc(one_liner),
+        court_json=court_json,
+        court_script=court_script,
         prev_href=f"{prev[-1]}.html" if prev else "#", prev_class="" if prev else "off",
         next_href=f"{nxt[0]}.html" if nxt else "#", next_class="" if nxt else "off",
     )

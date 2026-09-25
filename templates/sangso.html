@@ -187,6 +187,58 @@ body.vertical .seal { writing-mode: horizontal-tb; }
 body.vertical .stats { margin: 0 40px 0 0; }
 body.vertical .notice { margin: 0 0 0 24px; }
 
+/* ── 조회(朝會) 장면 ───────────────────────────────────── */
+.court { max-width: 1000px; margin: 0 auto 36px; position: relative; padding: 6px;
+  background: linear-gradient(135deg, #2a1a10, #120a06); border-radius: 6px;
+  box-shadow: 0 18px 50px rgba(0,0,0,.65), inset 0 0 0 1px rgba(201,162,74,.55); }
+.court::before, .court::after { content: ""; position: absolute; width: 38px; height: 38px; border: 2px solid #c9a24a; z-index: 3; pointer-events: none; }
+.court::before { top: 12px; left: 12px; border-right: 0; border-bottom: 0; }
+.court::after { bottom: 12px; right: 12px; border-left: 0; border-top: 0; }
+.court-view { position: relative; aspect-ratio: 1280 / 720; overflow: hidden; border-radius: 3px; outline: 1px solid rgba(201,162,74,.35); }
+.court canvas#court-canvas { display: block; width: 100%; height: 100%; }
+.court-hud { position: absolute; top: 4.5%; left: 4%; text-align: left; color: #f0dca0;
+  font-family: var(--hanja); letter-spacing: .5em; font-size: clamp(10px, 1.3vw, 14px); text-shadow: 0 2px 8px rgba(0,0,0,.8); white-space: nowrap; }
+.court-hud small { display: block; letter-spacing: .15em; font-family: var(--serif); color: rgba(240,220,160,.7); font-size: .8em; margin-top: 2px; }
+.court-bubble { position: absolute; transform: translateY(-100%); width: max-content; max-width: min(34%, 320px);
+  background: linear-gradient(180deg, #fffaf0, #f3e8d0); color: #2a1d12; border: 1px solid #c9a24a; border-radius: 4px 14px 14px 14px;
+  padding: 10px 14px 11px; font-size: clamp(11px, 1.45vw, 15.5px); line-height: 1.6; word-break: keep-all;
+  box-shadow: 0 10px 24px rgba(0,0,0,.45), inset 0 0 0 3px rgba(255,255,255,.6); animation: rise .7s .5s both; }
+.court-bubble::after { content: ""; position: absolute; left: -1px; bottom: -13px; width: 16px; height: 14px;
+  background: #f3e8d0; border-left: 1px solid #c9a24a; clip-path: polygon(0 0, 100% 0, 0 100%); }
+.court-bubble small { display: flex; align-items: center; gap: 6px; color: #a3281c; font-weight: 700; font-size: .74em; letter-spacing: .12em; margin-bottom: 3px; }
+.court-bubble small::before { content: "言"; font-family: var(--hanja); display: inline-grid; place-items: center; width: 1.6em; height: 1.6em;
+  background: #a3281c; color: #fff3e3; border-radius: 3px; font-size: .95em; letter-spacing: 0; }
+@keyframes rise { from { opacity: 0; transform: translateY(-88%); } to { opacity: 1; transform: translateY(-100%); } }
+.court-dialog { position: absolute; left: 3%; right: 3%; bottom: 4%; display: flex; align-items: flex-end; cursor: pointer; }
+.court-dialog:focus-visible { outline: 2px solid #f0cf78; outline-offset: 4px; border-radius: 6px; }
+.court-face { flex: none; width: clamp(64px, 13%, 128px); aspect-ratio: 240 / 280; border-radius: 6px; overflow: hidden; margin-right: -14px; z-index: 1;
+  border: 2px solid #c9a24a; box-shadow: 0 8px 20px rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.4); }
+.court-face canvas { display: block; width: 100%; height: 100%; }
+.court-box { flex: 1; min-height: clamp(66px, 12.5vw, 118px); position: relative; padding: 12px 20px 14px 32px; border-radius: 6px;
+  background: linear-gradient(180deg, rgba(34,18,11,.9), rgba(18,10,6,.94)); backdrop-filter: blur(4px);
+  border: 1px solid rgba(201,162,74,.8); box-shadow: 0 10px 30px rgba(0,0,0,.5), inset 0 0 0 4px rgba(18,10,6,.9), inset 0 0 0 5px rgba(201,162,74,.35); }
+.court-name { display: inline-flex; align-items: baseline; gap: 8px; margin-bottom: 4px; font-family: var(--hanja); font-weight: 700;
+  color: #f0cf78; font-size: clamp(12px, 1.55vw, 16px); letter-spacing: .08em; }
+.court-name span { font-family: var(--serif); font-weight: 400; color: rgba(240,220,160,.65); font-size: .82em; letter-spacing: .04em; }
+.court-text { font-size: clamp(12px, 1.7vw, 17.5px); line-height: 1.75; color: #f6ead0; min-height: 3.5em; word-break: keep-all; }
+.court-more { position: absolute; right: 16px; bottom: 8px; color: #f0cf78; font-size: 13px; animation: bob 1.2s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(3px); opacity: .5; } }
+.court-go { position: absolute; right: 12px; bottom: 10px; font: 700 13px var(--serif); color: #1d120a; cursor: pointer; letter-spacing: .04em;
+  background: linear-gradient(180deg, #f3d98a, #c9a24a); border: 1px solid #7a5a1e; border-radius: 999px; padding: 6px 14px; box-shadow: 0 3px 10px rgba(0,0,0,.4); }
+.court-go:hover { filter: brightness(1.08); }
+.court-hint { position: absolute; right: 3%; top: 4.5%; font-size: 11px; color: rgba(240,220,160,.6); letter-spacing: .05em; }
+@media (prefers-reduced-motion: reduce) { .court-bubble, .court-more { animation: none; } }
+@media (max-width: 640px) {
+  .court { margin: 0 -8px 26px; padding: 4px; }
+  .court::before, .court::after { display: none; }
+  .court-view { overflow: visible; }
+  .court-dialog { position: static; margin-top: 8px; }
+  .court-hint { display: none; }
+  .court-hud { top: 3%; left: 3%; }
+  .court-bubble { max-width: 40%; font-size: 9.5px; line-height: 1.45; padding: 5px 8px; }
+  .court-box { padding: 10px 14px 12px 24px; }
+}
+
 @media (max-width: 640px) {
   body { padding: 18px 16px 110px; }
   .rod { margin: 0 -6px; } .rod::before { left: -6px; } .rod::after { right: -6px; }
@@ -208,6 +260,26 @@ body.vertical .notice { margin: 0 0 0 24px; }
   <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency=".06" numOctaves="2" seed="7"/>
     <feDisplacementMap in="SourceGraphic" scale="4"/></filter>
 </svg>
+
+<!-- 조회 장면: 승상 제갈량과 엎드린 신하들 (그림은 templates/court.js 가 그립니다) -->
+<section class="court" aria-label="승상부 조회 장면">
+  <div class="court-view">
+    <canvas id="court-canvas" width="1280" height="720" role="img" aria-label="궁궐 대전에서 승상 제갈량이 단상에 서고 신하들이 엎드려 있는 장면"></canvas>
+    <div class="court-hud">丞相府 朝會<small>$ganji · $date_short</small></div>
+    <div class="court-hint">대화창을 누르면 다음 말씀 ›</div>
+    <div class="court-bubble" id="court-bubble"><small>오늘의 한마디</small>$one_liner</div>
+    <div class="court-dialog" id="court-dialog" tabindex="0" role="button" aria-label="대화창: 클릭하거나 Enter를 누르면 다음 대사">
+      <div class="court-face"><canvas id="court-portrait" width="240" height="280" aria-hidden="true"></canvas></div>
+      <div class="court-box">
+        <div class="court-name">諸葛亮 <span>승상 제갈량</span></div>
+        <div class="court-text" id="court-text" aria-live="polite"></div>
+        <span class="court-more" id="court-more" aria-hidden="true">▾</span>
+        <button type="button" class="court-go" id="court-go" hidden>상소 펼쳐 보기 ▼</button>
+      </div>
+    </div>
+  </div>
+</section>
+<script id="court-data" type="application/json">$court_json</script>
 
 <div class="stage">
   <div class="rod" aria-hidden="true"></div>
@@ -312,6 +384,9 @@ body.vertical .notice { margin: 0 0 0 24px; }
     paper.scrollBy({ left: -e.deltaY });
   }, { passive: false });
 })();
+</script>
+<script>
+$court_script
 </script>
 </body>
 </html>

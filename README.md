@@ -2,6 +2,8 @@
 
 매일 오전 7시, 승상 제갈량이 **주공(나)께 올리는 상소문** 창이 뜹니다.
 
+창을 열면 먼저 **승상부 조회(朝會) 장면**이 나옵니다. 문무백관이 엎드린 궁궐 대전에서 금박 병풍 앞 단상에 선 제갈량이 **말풍선으로 '오늘의 한마디'**를 건네고, 아래 대화창을 누를 때마다 오늘의 군령을 한 줄씩 아룁니다. 그림은 파일 없이 코드(`templates/court.js`)로 그려서 인터넷 없이도 뜹니다.
+
 - **제1장 · 클로드 코드 운용책** — 초보인 내가 클로드 코드를 더 잘 쓰는 법 (공백 제외 2,000자 이상)
 - **제2장 · 대업과 삶의 방향** — 내 비즈니스와 삶에 대한 조언 (공백 제외 3,000자 이상)
 - **오늘의 군령(軍令)** — 오늘 바로 해볼 일 2가지 (체크하면 날짜별로 기억)
@@ -78,6 +80,7 @@ python sangso.py              # 오늘 상소가 없으면 쓰고, 있으면 그
 python sangso.py --force      # 오늘 상소를 새로 쓴다
 python sangso.py --sample     # Claude 호출 없이 견본으로 디자인만 확인
 python sangso.py --no-open    # 창은 띄우지 않고 파일만 만든다
+python sangso.py --redraw     # 지난 상소들을 지금 디자인으로 다시 그린다
 ```
 
 만들어진 상소는 `output/날짜.html`에, 원문 데이터는 `archive/날짜.json`에 쌓입니다.
@@ -96,6 +99,7 @@ sangso_lib/
   engine.py                ← Claude 호출 (claude -p 또는 API) + 분량 검사 + 모자라면 다시 요청
   render.py                ← JSON → 두루마리 HTML, 창 띄우기
 templates/sangso.html      ← 디자인 (색·글꼴·배치를 바꾸려면 이 파일만)
+templates/court.js         ← 조회 장면 그림 + 말풍선 + 대화창 동작
 sample/first_sangso.json   ← 첫 상소 견본 (Claude 호출이 실패한 날엔 지난 상소나 이것이 대신 뜸)
 install/                   ← 운영체제별 예약 등록 스크립트
 ```
@@ -112,6 +116,8 @@ install/                   ← 운영체제별 예약 등록 스크립트
 | 분량 | `config.json`의 `min_chars_part1`, `min_chars_part2` |
 | 매일 돌아가는 주제 | `sangso_lib/prompt.py`의 `CLAUDE_CODE_TOPICS`, `LIFE_TOPICS` |
 | 말투·규칙 | `sangso_lib/prompt.py`의 `SYSTEM` |
+| 조회 장면(인물 위치·옷 색) | `templates/court.js` 아래쪽 '장면 조립' 부분 |
+| 디자인을 바꾼 뒤 지난 상소에도 적용 | `python sangso.py --redraw` (Claude 호출 없음) |
 | 색·글꼴·배치 | `templates/sangso.html` 맨 위 `:root { ... }` |
 | API 키 방식 사용 | `config.json`의 `engine`을 `"api"`로, `pip install anthropic`, 환경변수 `ANTHROPIC_API_KEY` 설정 |
 

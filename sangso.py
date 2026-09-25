@@ -8,6 +8,7 @@
   python sangso.py --scheduled  예약 작업용: 글을 미리 써 두고 config.json의 show_at(07:00)까지 기다렸다 띄웁니다
   python sangso.py --sample     Claude를 부르지 않고 견본 상소를 띄웁니다 (디자인 확인용)
   python sangso.py --no-open    창을 띄우지 않고 파일만 만듭니다
+  python sangso.py --redraw     Claude를 부르지 않고, 지난 상소들을 지금 디자인으로 다시 그립니다
 
 문제가 생기면 logs/sangso.log 를 먼저 열어 보세요. 무엇이 어디서 실패했는지 적혀 있습니다.
 """
@@ -95,6 +96,7 @@ def main() -> int:
     ap.add_argument("--scheduled", action="store_true", help="show_at 시각까지 기다렸다가 띄운다")
     ap.add_argument("--sample", action="store_true", help="견본 상소를 띄운다")
     ap.add_argument("--no-open", action="store_true", help="창을 띄우지 않는다")
+    ap.add_argument("--redraw", action="store_true", help="지난 상소들을 새 디자인으로 다시 그린다")
     args = ap.parse_args()
 
     setup_logging()
@@ -104,7 +106,16 @@ def main() -> int:
     today = date.today()
     today_html = OUT / f"{today.isoformat()}.html"
 
-    if args.sample:
+    if args.redraw:
+        # 날짜 순서대로 다시 그려야 '지난/다음 상소' 링크가 맞게 이어집니다
+        for f in sorted(ARCHIVE.glob("????-??-??.json")):
+            render.render(json.loads(f.read_text(encoding="utf-8")), date.fromisoformat(f.stem),
+                          OUT, TEMPLATE, "클로드 코드")
+            log.info("다시 그림: %s", f.stem)
+        if not today_html.exists():
+            return 0
+        page = today_html
+    elif args.sample:
         page = render.render(json.loads(SAMPLE.read_text(encoding="utf-8")), today, OUT, TEMPLATE,
                              "견본", notice="견본 상소입니다. 실제 상소는 python sangso.py 로 쓰게 하십시오.",
                              filename="sample.html")
