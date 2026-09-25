@@ -1,0 +1,8 @@
+# 개인 기록과 생성물 — 공개 저장소에 올라가지 않게 합니다
+profile.md
+data/
+output/
+archive/
+logs/
+__pycache__/
+*.pyc

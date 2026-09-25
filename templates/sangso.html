@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>제갈량 상소문 · $date_short</title>
+<!-- 글꼴: 인터넷이 없으면 컴퓨터에 있는 명조체(바탕/AppleMyungjo)로 자동 대체됩니다 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Nanum+Brush+Script&family=Noto+Serif+KR:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+/* ── 색과 글꼴 (여기 값만 바꾸면 전체 분위기가 바뀝니다) ───────────── */
+:root {
+  --lacquer: #1d1510;        /* 바탕: 옻칠한 나무 책상 */
+  --lacquer-2: #2d2119;
+  --paper: #efe3c8;          /* 한지 */
+  --paper-edge: #dccaa3;
+  --ink: #1e1914;            /* 먹 */
+  --ink-soft: #4a3f33;
+  --ink-faint: rgba(60, 45, 30, .14);
+  --cinnabar: #a3281c;       /* 주사(朱砂): 인장·붉은 표시 */
+  --gold: #b08d4a;
+  --wood: #5a3620;           /* 두루마리 축 */
+  --wood-hi: #8a5a36;
+  --fs: 18px;                /* 본문 글자 크기 (A-/A+ 버튼이 이 값을 바꿉니다) */
+  --serif: "Gowun Batang", "Noto Serif KR", "Batang", "바탕", "AppleMyungjo", serif;
+  --hanja: "Noto Serif KR", "Batang", "AppleMyungjo", serif;
+  --brush: "Nanum Brush Script", "Gowun Batang", cursive;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(176,141,74,.10), transparent 60%),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.05) 0 2px, transparent 2px 9px),
+    linear-gradient(180deg, var(--lacquer-2), var(--lacquer));
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family: var(--serif);
+  min-height: 100vh;
+  padding: 28px 16px 90px;
+}
+
+/* ── 두루마리 ─────────────────────────────────────────── */
+.stage { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; align-items: stretch; }
+.rod {
+  position: relative; height: 26px; margin: 0 -26px; border-radius: 13px; z-index: 2;
+  background: linear-gradient(180deg, var(--wood-hi) 0%, var(--wood) 45%, #2e1a0e 100%);
+  box-shadow: 0 6px 14px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.18);
+}
+.rod::before, .rod::after {             /* 축 끝의 옥(玉) 장식 */
+  content: ""; position: absolute; top: -5px; width: 30px; height: 36px; border-radius: 8px;
+  background: linear-gradient(180deg, #d9c9a0, #8f7a4c 60%, #5d4c2b);
+  box-shadow: 0 3px 8px rgba(0,0,0,.5);
+}
+.rod::before { left: -16px; } .rod::after { right: -16px; }
+
+.paper {
+  position: relative; z-index: 1;
+  background-color: var(--paper);
+  /* 한지 섬유 질감: SVG 노이즈 + 은은한 얼룩 */
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .35  0 0 0 0 .27  0 0 0 0 .17  0 0 0 .09 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),
+    radial-gradient(ellipse at 20% 10%, rgba(255,255,255,.35), transparent 50%),
+    radial-gradient(ellipse at 85% 70%, rgba(150,110,60,.10), transparent 55%);
+  box-shadow: inset 0 0 60px rgba(120, 85, 40, .22), 0 10px 40px rgba(0,0,0,.5);
+  border-left: 1px solid var(--paper-edge); border-right: 1px solid var(--paper-edge);
+  padding: 56px clamp(22px, 7vw, 76px) 60px;
+  font-size: var(--fs); line-height: 2.05; word-break: keep-all; overflow-wrap: anywhere;
+  animation: unroll 1.4s cubic-bezier(.2,.7,.2,1) both;
+}
+@keyframes unroll { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+@media (prefers-reduced-motion: reduce) { .paper { animation: none; } }
+
+/* ── 머리: 세로 제목 + 날짜 ────────────────────────────── */
+.head { display: flex; gap: 28px; align-items: flex-start; padding-bottom: 26px;
+        border-bottom: 3px double var(--ink-soft); margin-bottom: 30px; }
+.vtitle {
+  writing-mode: vertical-rl; font-family: var(--hanja); font-weight: 900;
+  font-size: 58px; letter-spacing: .18em; line-height: 1; color: var(--ink);
+  padding: 8px 10px; border: 2px solid var(--ink); outline: 1px solid var(--ink); outline-offset: 4px;
+  flex: none;
+}
+.head-meta { flex: 1; min-width: 0; }
+.eyebrow { font-family: var(--hanja); color: var(--cinnabar); letter-spacing: .3em; font-size: 14px; margin: 0; }
+h1 { font-family: var(--hanja); font-weight: 900; font-size: clamp(26px, 4.4vw, 38px);
+     line-height: 1.35; margin: 6px 0 10px; letter-spacing: -.01em; }
+.dateline { margin: 0; color: var(--ink-soft); font-size: 15px; line-height: 1.7; }
+.dateline b { font-family: var(--hanja); color: var(--ink); }
+
+/* ── 본문 ──────────────────────────────────────────────── */
+.opening { font-size: calc(var(--fs) * 1.04); }
+.opening::first-letter { font-family: var(--hanja); font-weight: 900; font-size: 2.6em;
+  float: left; line-height: 1; margin: 6px 10px 0 0; color: var(--cinnabar); }
+.part { margin-top: 52px; }
+.part-head { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; }
+.part-num { font-family: var(--hanja); font-weight: 900; font-size: 40px; color: var(--paper);
+  background: var(--cinnabar); width: 60px; height: 60px; display: grid; place-items: center;
+  border-radius: 4px; flex: none; box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 4px var(--cinnabar); }
+.part-title { margin: 0; font-family: var(--hanja); font-weight: 900; font-size: clamp(21px, 3vw, 27px); line-height: 1.4; }
+.part-sub { margin: 0; font-size: 14px; color: var(--ink-soft); letter-spacing: .06em; }
+h3 { font-family: var(--hanja); font-weight: 700; font-size: calc(var(--fs) * 1.12);
+     margin: 34px 0 6px; padding-left: 16px; position: relative; line-height: 1.6; }
+h3::before { content: ""; position: absolute; left: 0; top: .35em; bottom: .35em; width: 4px; background: var(--cinnabar); }
+p { margin: 0 0 1.1em; }
+.part p { text-indent: 1em; }
+.rule { border: 0; height: 18px; margin: 48px 0 0; background:
+  radial-gradient(circle, var(--cinnabar) 3px, transparent 3.5px) center / 18px 18px no-repeat,
+  linear-gradient(var(--ink-faint), var(--ink-faint)) center / 100% 1px no-repeat; }
+
+/* ── 오늘의 군령 + 오늘의 한 구절 ─────────────────────── */
+.orders-wrap { display: grid; grid-template-columns: 1fr auto; gap: 22px; margin-top: 52px; align-items: stretch; }
+.orders { border: 2px solid var(--ink); padding: 22px 24px 18px; position: relative; background: rgba(255,255,255,.18); }
+.orders::before { content: "軍令"; position: absolute; top: -15px; left: 18px; background: var(--paper);
+  padding: 0 10px; font-family: var(--hanja); font-weight: 900; color: var(--cinnabar); letter-spacing: .3em; }
+.orders h4 { margin: 0 0 10px; font-size: 15px; color: var(--ink-soft); font-weight: 400; }
+.order { display: flex; gap: 12px; align-items: flex-start; margin: 10px 0; cursor: pointer; line-height: 1.8; }
+.order input { appearance: none; flex: none; width: 24px; height: 24px; margin-top: 4px; border: 2px solid var(--ink);
+  border-radius: 2px; display: grid; place-items: center; cursor: pointer; background: transparent; }
+.order input:checked { background: var(--cinnabar); border-color: var(--cinnabar); }
+.order input:checked::after { content: "畢"; color: var(--paper); font-family: var(--hanja); font-size: 14px; font-weight: 900; }
+.order input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.order .tag { font-family: var(--hanja); font-weight: 700; color: var(--cinnabar); margin-right: 6px; }
+.order:has(input:checked) .txt { text-decoration: line-through; text-decoration-color: var(--cinnabar); opacity: .6; }
+.motto { writing-mode: vertical-rl; border-left: 1px solid var(--ink-faint); border-right: 1px solid var(--ink-faint);
+  padding: 4px 14px; display: flex; gap: 14px; }
+.motto .hj { display: flex; gap: 6px; font-family: var(--hanja); font-weight: 900; font-size: 30px; letter-spacing: .12em; line-height: 1.2; }
+.motto .rd { font-size: 14px; color: var(--ink-soft); line-height: 1.5; }
+.motto-meaning { margin: 12px 0 0; font-size: 15px; color: var(--ink-soft); text-indent: 0; }
+
+/* ── 맺음 + 서명 + 인장 ───────────────────────────────── */
+.closing { margin-top: 52px; font-size: calc(var(--fs) * 1.04); }
+.sign { display: flex; justify-content: flex-end; align-items: center; gap: 22px; margin-top: 30px; }
+.sign-txt { text-align: right; line-height: 1.6; }
+.sign-date { font-size: 15px; color: var(--ink-soft); }
+.sign-name { font-family: var(--brush); font-size: 40px; line-height: 1.1; }
+.sign-name .hj { font-family: var(--hanja); font-weight: 700; font-size: 22px; margin-right: 6px; }
+.seal { width: 92px; height: 92px; flex: none; transform: rotate(-4deg); display: grid;
+  grid-template-columns: 1fr 1fr; grid-auto-flow: column; grid-template-rows: 1fr 1fr;
+  background: var(--cinnabar); color: #f6e6d4; font-family: var(--hanja); font-weight: 900; font-size: 30px;
+  line-height: 1; place-items: center; padding: 6px; border-radius: 6px;
+  box-shadow: inset 0 0 0 3px var(--cinnabar), inset 0 0 0 5px rgba(246,230,212,.85);
+  filter: url(#rough); opacity: .92; mix-blend-mode: multiply; }
+/* 인장은 세로쓰기처럼 오른쪽 위부터 읽힙니다: 諸葛 / 亮印 */
+.seal span:nth-child(1) { grid-area: 1 / 2; } .seal span:nth-child(2) { grid-area: 2 / 2; }
+.seal span:nth-child(3) { grid-area: 1 / 1; } .seal span:nth-child(4) { grid-area: 2 / 1; }
+.stats { margin-top: 40px; font-size: 13px; color: var(--ink-soft); text-align: center; letter-spacing: .04em; }
+.notice { border: 1px dashed var(--cinnabar); color: var(--cinnabar); padding: 10px 14px; font-size: 14px; margin: 0 0 24px; line-height: 1.7; }
+.notice:empty { display: none; }
+
+/* ── 아래 도구 막대 ───────────────────────────────────── */
+.tools { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 5;
+  display: flex; gap: 6px; padding: 6px; border-radius: 999px; background: rgba(29,21,16,.88);
+  box-shadow: 0 6px 20px rgba(0,0,0,.45); backdrop-filter: blur(6px); max-width: calc(100vw - 32px); flex-wrap: wrap; justify-content: center; }
+.tools a, .tools button { font: 14px var(--serif); color: var(--paper); background: transparent; border: 1px solid rgba(239,227,200,.25);
+  border-radius: 999px; padding: 7px 14px; cursor: pointer; text-decoration: none; white-space: nowrap; }
+.tools a:hover, .tools button:hover { background: rgba(239,227,200,.12); }
+.tools .off { opacity: .35; pointer-events: none; }
+
+/* ── 세로쓰기 모드: 옛 상소처럼 오른쪽에서 왼쪽으로 읽기 ───────── */
+body.vertical .stage { max-width: none; flex-direction: row-reverse; height: calc(100vh - 118px); }
+body.vertical .rod { width: 26px; height: auto; margin: -26px 0; background: linear-gradient(90deg, var(--wood-hi), var(--wood) 45%, #2e1a0e); }
+body.vertical .rod::before, body.vertical .rod::after { left: -5px; width: 36px; height: 30px; right: auto; }
+body.vertical .rod::before { top: -16px; } body.vertical .rod::after { top: auto; bottom: -16px; }
+body.vertical .paper { flex: 1; min-width: 0; writing-mode: vertical-rl; overflow-x: auto; overflow-y: hidden;
+  padding: clamp(22px, 5vh, 56px) 56px; border: 0; border-top: 1px solid var(--paper-edge); border-bottom: 1px solid var(--paper-edge);
+  animation-name: unroll-v; }
+@keyframes unroll-v { from { clip-path: inset(0 0 0 100%); } to { clip-path: inset(0 0 0 0); } }
+body.vertical .head { border-bottom: 0; border-left: 3px double var(--ink-soft); padding: 0 0 0 26px; margin: 0 0 0 30px; }
+body.vertical .vtitle { writing-mode: vertical-rl; }
+body.vertical .part { margin: 0 52px 0 0; }
+body.vertical .part-head { flex-direction: column; }
+body.vertical h3 { margin: 0 34px 0 6px; padding: 16px 0 0; }
+body.vertical h3::before { left: .35em; right: .35em; top: 0; bottom: auto; width: auto; height: 4px; }
+body.vertical p { text-align: start; }
+body.vertical .opening::first-letter { float: none; font-size: 1.6em; margin: 0; }
+body.vertical .rule { margin: 0 48px 0 0; width: 18px; height: auto;
+  background: radial-gradient(circle, var(--cinnabar) 3px, transparent 3.5px) center / 18px 18px no-repeat,
+  linear-gradient(90deg, var(--ink-faint), var(--ink-faint)) center / 1px 100% no-repeat; }
+body.vertical .orders-wrap { display: flex; flex-direction: column; margin: 0 52px 0 0; }
+body.vertical .orders::before { top: 18px; left: auto; right: -15px; }
+body.vertical .motto { writing-mode: vertical-rl; max-height: none; border: 0; border-top: 1px solid var(--ink-faint); border-bottom: 1px solid var(--ink-faint); padding: 14px 4px; }
+body.vertical .closing { margin: 0 52px 0 0; }
+body.vertical .sign { margin: 0 30px 0 0; justify-content: flex-end; }
+body.vertical .sign-txt { text-align: left; }
+body.vertical .seal { writing-mode: horizontal-tb; }
+body.vertical .stats { margin: 0 40px 0 0; }
+body.vertical .notice { margin: 0 0 0 24px; }
+
+@media (max-width: 640px) {
+  body { padding: 18px 16px 110px; }
+  .rod { margin: 0 -6px; } .rod::before { left: -6px; } .rod::after { right: -6px; }
+  .motto .hj { flex-wrap: wrap; column-gap: 14px; font-size: 26px; }
+  .head { gap: 16px; } .vtitle { font-size: 40px; }
+  .orders-wrap { grid-template-columns: 1fr; }
+  .motto { writing-mode: horizontal-tb; border: 0; border-top: 1px solid var(--ink-faint); padding: 12px 0 0; flex-direction: column; gap: 4px; }
+  .seal { width: 76px; height: 76px; font-size: 24px; }
+  .sign-name { font-size: 34px; }
+  .tools { flex-wrap: nowrap; gap: 4px; padding: 5px; }
+  .tools a, .tools button { font-size: 12.5px; padding: 6px 9px; }
+}
+@media print { body { background: none; padding: 0; } .tools, .rod { display: none; } .paper { box-shadow: none; animation: none; } }
+</style>
+</head>
+<body>
+<!-- 인장 테두리를 거칠게(돌에 새긴 느낌) 만드는 필터 -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency=".06" numOctaves="2" seed="7"/>
+    <feDisplacementMap in="SourceGraphic" scale="4"/></filter>
+</svg>
+
+<div class="stage">
+  <div class="rod" aria-hidden="true"></div>
+  <article class="paper" id="paper">
+    <p class="notice">$notice</p>
+    <header class="head">
+      <div class="vtitle" aria-label="상소문">上疏文</div>
+      <div class="head-meta">
+        <p class="eyebrow">丞相 諸葛亮 上表</p>
+        <h1>$title</h1>
+        <p class="dateline"><b>$ganji</b> · $date_long<br>승상 제갈량이 주공께 삼가 올리옵니다</p>
+      </div>
+    </header>
+
+    <p class="opening">$salutation</p>
+
+    <section class="part">
+      <div class="part-head"><div class="part-num" aria-hidden="true">一</div>
+        <div><p class="part-sub">제1장 · 클로드 코드 운용책(運用策)</p><h2 class="part-title">$p1_heading</h2></div></div>
+      $p1_body
+    </section>
+
+    <hr class="rule">
+
+    <section class="part">
+      <div class="part-head"><div class="part-num" aria-hidden="true">二</div>
+        <div><p class="part-sub">제2장 · 대업(大業)과 삶의 방향</p><h2 class="part-title">$p2_heading</h2></div></div>
+      $p2_body
+    </section>
+
+    <div class="orders-wrap">
+      <div class="orders">
+        <h4>오늘 하루, 신이 청하옵는 두 가지 일 — 마치시면 눌러 표시하소서</h4>
+        <label class="order"><input type="checkbox" data-k="cc"><span class="txt"><span class="tag">道具</span>$task_cc</span></label>
+        <label class="order"><input type="checkbox" data-k="life"><span class="txt"><span class="tag">大業</span>$task_life</span></label>
+        <p class="motto-meaning">$motto_meaning</p>
+      </div>
+      <div class="motto" aria-label="오늘의 한 구절">
+        <span class="hj">$motto_hanja</span>
+        <span class="rd">$motto_reading · $motto_source</span>
+      </div>
+    </div>
+
+    <p class="closing">$closing</p>
+
+    <div class="sign">
+      <div class="sign-txt">
+        <div class="sign-date">$date_long</div>
+        <div class="sign-name"><span class="hj">臣</span>제갈량 돈수재배</div>
+      </div>
+      <div class="seal" aria-label="제갈량인"><span>諸</span><span>葛</span><span>亮</span><span>印</span></div>
+    </div>
+
+    <p class="stats">제1장 $c1자 · 제2장 $c2자 · 합계 $ctotal자 (공백 제외) · $engine</p>
+  </article>
+  <div class="rod" aria-hidden="true"></div>
+</div>
+
+<nav class="tools" aria-label="도구">
+  <a href="$prev_href" class="$prev_class">◀ 지난 상소</a>
+  <button type="button" id="mode">세로로 읽기</button>
+  <button type="button" id="smaller" aria-label="글자 작게">A−</button>
+  <button type="button" id="bigger" aria-label="글자 크게">A+</button>
+  <a href="$next_href" class="$next_class">다음 상소 ▶</a>
+</nav>
+
+<script>
+/* 이 페이지의 작은 기능들. localStorage(브라우저 저장소)는 막혀 있을 수 있어 모두 try로 감쌉니다. */
+(function () {
+  var KEY = "sangso:" + "$date_iso";
+  function load(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }
+  function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+  // 1) 군령 체크 상태를 날짜별로 기억
+  var done = load(KEY, {});
+  document.querySelectorAll(".order input").forEach(function (box) {
+    box.checked = !!done[box.dataset.k];
+    box.addEventListener("change", function () { done[box.dataset.k] = box.checked; save(KEY, done); });
+  });
+
+  // 2) 글자 크기
+  var fs = load("sangso:fs", 18);
+  function applyFs() { document.documentElement.style.setProperty("--fs", fs + "px"); save("sangso:fs", fs); }
+  document.getElementById("smaller").onclick = function () { fs = Math.max(14, fs - 1); applyFs(); };
+  document.getElementById("bigger").onclick = function () { fs = Math.min(26, fs + 1); applyFs(); };
+  applyFs();
+
+  // 3) 가로/세로 읽기 전환
+  var paper = document.getElementById("paper"), btn = document.getElementById("mode");
+  function applyMode(v) {
+    document.body.classList.toggle("vertical", v);
+    btn.textContent = v ? "가로로 읽기" : "세로로 읽기";
+    save("sangso:vertical", v);
+  }
+  btn.onclick = function () { applyMode(!document.body.classList.contains("vertical")); };
+  applyMode(load("sangso:vertical", false));
+
+  // 세로쓰기일 때 마우스 휠(위아래)을 두루마리 좌우 이동으로 바꿔 줍니다
+  paper.addEventListener("wheel", function (e) {
+    if (!document.body.classList.contains("vertical") || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+    e.preventDefault();
+    paper.scrollBy({ left: -e.deltaY });
+  }, { passive: false });
+})();
+</script>
+</body>
+</html>

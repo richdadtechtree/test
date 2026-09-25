@@ -1,0 +1,140 @@
+# 제갈량 상소문 (諸葛亮 上疏文)
+
+매일 오전 7시, 승상 제갈량이 **주공(나)께 올리는 상소문** 창이 뜹니다.
+
+- **제1장 · 클로드 코드 운용책** — 초보인 내가 클로드 코드를 더 잘 쓰는 법 (공백 제외 2,000자 이상)
+- **제2장 · 대업과 삶의 방향** — 내 비즈니스와 삶에 대한 조언 (공백 제외 3,000자 이상)
+- **오늘의 군령(軍令)** — 오늘 바로 해볼 일 2가지 (체크하면 날짜별로 기억)
+- **오늘의 한 구절** — 실제 고전(출사표, 계자서 등)에서 고른 한 구절
+
+두루마리·한지·붉은 인장 디자인이고, **가로/세로 읽기**와 **글자 크기** 조절, **지난 상소 넘겨보기**가 됩니다.
+
+> 처음 써 둔 상소 한 편이 `sample/first_sangso.json`에 있습니다. `python sangso.py --sample`로 바로 볼 수 있습니다.
+
+---
+
+## 먼저 알아둘 점: 제갈량은 무엇을 보고 조언하나요?
+
+Claude는 **claude.ai에서 나눈 예전 대화를 스스로 꺼내 볼 수 없습니다.** 그래서 이 프로그램이 매일 아침 아래 세 가지를 모아서 Claude에게 건넵니다.
+
+| 재료 | 위치 | 설명 |
+|---|---|---|
+| ① **행장(行狀)** | `profile.md` | 내가 직접 적는 "나에 대한 기록". **조언 품질을 가장 크게 좌우합니다.** 첫 실행 때 자동으로 생깁니다. |
+| ② 클로드 코드 대화 기록 | `~/.claude/projects/` | 내 컴퓨터의 클로드 코드가 자동 저장하는 대화 기록. 최근 21일 동안 **내가 입력한 말**만 읽습니다. |
+| ③ claude.ai 대화 (선택) | `data/conversations.json` | claude.ai → 설정 → 개인정보(Privacy) → **데이터 내보내기**로 받은 zip 안의 `conversations.json`을 `data/` 폴더에 넣으면 함께 읽습니다. |
+
+그리고 **지난 상소 5편**도 함께 넘겨서, 같은 말을 되풀이하지 않고 어제 권한 일을 이어받게 합니다.
+
+`profile.md`에 적지 않은 내용은 **지어내지 않도록** 지시해 두었습니다. 모르는 건 "행장에 적어 주시옵소서"라고 되묻습니다.
+
+---
+
+## 준비물
+
+1. **파이썬 3.9 이상** — 추가 설치할 라이브러리는 없습니다(표준 라이브러리만 사용).
+   - 윈도우: <https://www.python.org> 에서 설치할 때 **"Add python.exe to PATH"를 꼭 체크**하세요.
+   - 맥: 터미널에서 `python3 --version`이 안 되면 `xcode-select --install`.
+2. **클로드 코드**가 설치·로그인돼 있을 것 — 터미널에서 `claude`가 실행되면 됩니다.
+   이 프로그램은 `claude -p`(질문 하나 던지고 답 받기 모드)로 글을 받으므로 **API 키가 필요 없습니다.**
+3. 크롬이나 엣지 브라우저(있으면 주소창 없는 깔끔한 창으로 뜨고, 없으면 기본 브라우저로 뜹니다).
+
+---
+
+## 설치 (3단계)
+
+### 1단계 — 이 폴더를 내 컴퓨터에 받기
+
+```bash
+git clone https://github.com/richdadtechtree/test.git sangso
+cd sangso
+```
+
+> **맥 사용자 주의:** `데스크탑`, `문서`, `다운로드` 폴더 안에 두면 macOS 보안 때문에 예약 작업이 파일을 읽지 못합니다. 홈 바로 아래(예: `~/sangso`)에 두세요.
+
+### 2단계 — 한 번 직접 실행해 보기
+
+```bash
+python sangso.py            # 맥은 python3 sangso.py
+```
+
+1~4분 뒤 상소문 창이 뜨면 성공입니다. 이때 `profile.md`가 새로 생기니 **2번(하는 일)과 3번(삶의 방향) 칸을 채워 주세요.**
+
+### 3단계 — 매일 오전 7시 예약
+
+| 운영체제 | 등록 | 해제 |
+|---|---|---|
+| 윈도우 | `install_windows.bat` 더블클릭 | `install_windows.bat -Uninstall` |
+| 맥 | `bash install/mac_install.sh` | `bash install/mac_install.sh --uninstall` |
+| 리눅스 | `bash install/linux_install.sh` | `bash install/linux_install.sh --uninstall` |
+
+**왜 6시 55분에 시작하나요?** 글을 쓰는 데 1~4분이 걸리기 때문입니다. 6:55에 미리 쓰기 시작하고, 다 쓰면 **7:00까지 기다렸다가** 창을 띄웁니다. 컴퓨터를 늦게 켰다면(윈도우) 켜자마자 씁니다.
+
+---
+
+## 명령어 모음
+
+```bash
+python sangso.py              # 오늘 상소가 없으면 쓰고, 있으면 그대로 연다
+python sangso.py --force      # 오늘 상소를 새로 쓴다
+python sangso.py --sample     # Claude 호출 없이 견본으로 디자인만 확인
+python sangso.py --no-open    # 창은 띄우지 않고 파일만 만든다
+```
+
+만들어진 상소는 `output/날짜.html`에, 원문 데이터는 `archive/날짜.json`에 쌓입니다.
+
+---
+
+## 폴더 구조 (각 파일이 하는 일)
+
+```
+sangso.py                  ← 시작점. 순서: 재료 모으기 → Claude에게 요청 → HTML로 만들기 → 창 띄우기
+config.json                ← 설정 (시각, 분량, 엔진, 읽을 기록 기간)
+profile.example.md         ← 행장 견본 (첫 실행 때 profile.md로 복사됨)
+sangso_lib/
+  collect.py               ← 재료 모으기 (profile.md, 클로드 코드 기록, claude.ai 내보내기, 지난 상소)
+  prompt.py                ← 제갈량에게 주는 지시문 + 날마다 바뀌는 주제 목록
+  engine.py                ← Claude 호출 (claude -p 또는 API) + 분량 검사 + 모자라면 다시 요청
+  render.py                ← JSON → 두루마리 HTML, 창 띄우기
+templates/sangso.html      ← 디자인 (색·글꼴·배치를 바꾸려면 이 파일만)
+sample/first_sangso.json   ← 첫 상소 견본 (Claude 호출이 실패한 날엔 지난 상소나 이것이 대신 뜸)
+install/                   ← 운영체제별 예약 등록 스크립트
+```
+
+**개인 기록은 git에 올라가지 않습니다.** `profile.md`, `data/`, `output/`, `archive/`, `logs/`는 `.gitignore`에 들어 있어서, 저장소가 공개돼 있어도 내 고민이 새어 나가지 않습니다.
+
+---
+
+## 바꾸고 싶을 때
+
+| 하고 싶은 것 | 고칠 곳 |
+|---|---|
+| 창 뜨는 시각 | `config.json`의 `show_at` + 예약 시각(설치 스크립트의 06:55)도 5분 앞으로 |
+| 분량 | `config.json`의 `min_chars_part1`, `min_chars_part2` |
+| 매일 돌아가는 주제 | `sangso_lib/prompt.py`의 `CLAUDE_CODE_TOPICS`, `LIFE_TOPICS` |
+| 말투·규칙 | `sangso_lib/prompt.py`의 `SYSTEM` |
+| 색·글꼴·배치 | `templates/sangso.html` 맨 위 `:root { ... }` |
+| API 키 방식 사용 | `config.json`의 `engine`을 `"api"`로, `pip install anthropic`, 환경변수 `ANTHROPIC_API_KEY` 설정 |
+
+---
+
+## 문제가 생기면 (디버깅 힌트)
+
+**가장 먼저 `logs/sangso.log`를 여세요.** 어느 단계에서 무엇이 실패했는지 적혀 있습니다.
+
+| 증상 | 원인과 해결 |
+|---|---|
+| 터미널에선 되는데 7시에만 안 됨 | 예약 작업은 PATH(프로그램 찾는 경로)가 달라 `claude`를 못 찾는 경우가 많습니다. 터미널에서 `where claude`(윈도우) / `which claude`(맥)로 나온 경로를 `config.json`의 `claude_cli_path`에 적으세요. |
+| "지난 상소를 다시 올리옵니다"라는 빨간 안내 | 오늘 글쓰기가 실패해 예전 것을 대신 띄운 것입니다. 안내문에 원인이 적혀 있고, `python sangso.py`로 다시 시도할 수 있습니다. |
+| "JSON을 찾지 못했습니다" | Claude가 형식을 어겼습니다. `logs/raw_*.txt`에 실제 답변이 저장돼 있습니다. 한 번 자동 재시도합니다. |
+| 분량이 모자람 | 한 번 더 써 달라고 자동 요청하고, 그래도 모자라면 더 긴 쪽을 씁니다. 하단에 실제 글자 수가 표시됩니다. |
+| 대화 기록이 0건 | 클로드 코드를 아직 많이 안 쓰셨거나, 기록 위치가 다를 수 있습니다(`CLAUDE_CONFIG_DIR` 환경변수를 쓰는 경우). |
+| 맥에서 예약 실행이 조용히 실패 | 폴더가 데스크탑/문서/다운로드 안에 있는지 확인하세요. `logs/launchd.err.log`도 보세요. |
+| 글꼴이 투박함 | 인터넷이 없으면 구글 웹글꼴 대신 컴퓨터 기본 명조체로 보입니다. 정상입니다. |
+
+---
+
+## 비용과 개인정보
+
+- `claude -p` 방식은 **내 클로드 구독 사용량** 안에서 동작합니다. 하루 한 번, 긴 글 한 편 분량입니다.
+- `profile.md`와 대화 기록 일부는 글을 쓸 때 **Claude에게 전송됩니다**(평소 클로드 코드를 쓸 때와 같은 경로). 그 외 다른 곳으로는 보내지 않습니다.
+- 비밀번호·API 키 같은 민감한 정보는 `profile.md`에 적지 마세요.
