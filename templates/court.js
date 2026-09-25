@@ -16,6 +16,10 @@
 (function () {
   var cv = document.getElementById("court-canvas");
   if (!cv || !cv.getContext) return;
+  // 그림 파일(assets/court.jpg 등)을 쓰는 중이면 장면은 그리지 않고 대화창만 움직입니다.
+  // 그림 파일이 깨졌으면(onerror) 코드 그림으로 되돌아갑니다.
+  var courtEl = document.querySelector(".court"), artImg = document.getElementById("court-art");
+  var HAS_ART = courtEl && courtEl.classList.contains("has-art");
   var W = 1280, H = 720, F = 700, HOR = 250, CH = 1.6;
   var K = Math.min(2, window.devicePixelRatio || 1); // 고해상도 화면에서도 선명하게
   cv.width = W * K; cv.height = H * K;
@@ -330,8 +334,6 @@
   var still = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
   var last = 0;
   function loop(tt) { if (tt - last > 45) { frame(tt); last = tt; } requestAnimationFrame(loop); }
-  frame(0);
-  if (!still) requestAnimationFrame(loop);
 
   /* ── 말풍선: 제갈량 얼굴 오른쪽 위에 붙입니다 ─────────────── */
   var bubble = document.getElementById("court-bubble");
@@ -340,7 +342,16 @@
     bubble.style.left = ((ZG[0] + SZ * .3) / W * 100) + "%";   // 얼굴 바로 오른쪽
     bubble.style.top = ((ZG[1] - SZ * 1.6) / H * 100) + "%";
   }
-  placeBubble();
+  function startScene() {
+    frame(0);
+    if (!still) requestAnimationFrame(loop);
+    placeBubble();
+  }
+  if (HAS_ART && artImg && artImg.complete && !artImg.naturalWidth) HAS_ART = false, courtEl.classList.remove("has-art"); // 이미 로드 실패
+  if (!HAS_ART) startScene();
+  else if (artImg) artImg.addEventListener("error", function () { // 그림 파일이 깨졌으면 코드 그림으로
+    courtEl.classList.remove("has-art"); startScene();
+  });
 
   /* ── 대화창: 클릭(또는 Enter/스페이스)하면 다음 대사 ──────── */
   var LINES = [

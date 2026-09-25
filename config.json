@@ -22,5 +22,12 @@
   "history_days": 21,
   "_history_days": "클로드코드 대화 기록을 며칠 전까지 읽을지",
   "max_context_chars": 60000,
-  "_max_context_chars": "대화 기록을 최대 몇 글자까지 넣을지 (너무 크면 느려지고 비용이 늘어납니다)"
+  "_max_context_chars": "대화 기록을 최대 몇 글자까지 넣을지 (너무 크면 느려지고 비용이 늘어납니다)",
+
+  "auto_art": true,
+  "_auto_art": "true면 조회 장면 그림을 무료 이미지 서비스(Pollinations, 가입 불필요)에서 처음 한 번 받아 둡니다. assets/court.jpg 를 직접 넣으면 그걸 우선 씁니다.",
+  "art_seed": 1234,
+  "_art_seed": "그림 번호. 바꾸면 다른 그림이 나옵니다. python sangso.py --new-art 로 자동으로 바꿀 수 있습니다.",
+  "art_bubble": [54, 30],
+  "_art_bubble": "그림을 쓸 때 말풍선 위치 [가로 %, 세로 %]. 말풍선의 왼쪽 아래 꼭지점 기준. 그림 속 제갈량 얼굴 오른쪽에 오도록 조절하세요."
 }

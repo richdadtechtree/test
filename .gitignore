@@ -6,3 +6,7 @@ archive/
 logs/
 __pycache__/
 *.pyc
+
+# 자동으로 받은 그림(각자 PC에서 생성)
+assets/*_auto.jpg
+assets/.art_attempt.json

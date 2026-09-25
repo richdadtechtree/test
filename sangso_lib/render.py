@@ -20,6 +20,7 @@ from datetime import date
 from pathlib import Path
 from string import Template
 
+from . import art
 from .engine import count_chars
 
 log = logging.getLogger("sangso")
@@ -48,7 +49,7 @@ def _body(part: dict) -> str:
 
 
 def render(data: dict, day: date, out_dir: Path, template: Path, engine_label: str,
-           notice: str = "", filename: str | None = None) -> Path:
+           notice: str = "", filename: str | None = None, bubble: tuple = (54, 30)) -> Path:
     """filename을 주면(견본·임시본) 그 이름으로 저장하고, 지난 상소의 링크는 건드리지 않습니다."""
     c1, c2 = count_chars(data.get("part1")), count_chars(data.get("part2"))
     tasks, motto = data.get("today_task") or {}, data.get("motto") or {}
@@ -66,6 +67,12 @@ def render(data: dict, day: date, out_dir: Path, template: Path, engine_label: s
     # </script> 같은 문자열이 글에 섞여도 스크립트가 끊기지 않도록 "</" 를 바꿔 둡니다
     court_json = json.dumps(court, ensure_ascii=False).replace("</", "<\\/")
     court_script = (template.parent / "court.js").read_text(encoding="utf-8")
+
+    # 그림 파일이 있으면 코드 그림 대신 사용합니다 (art.py 참고). ?v=… 는 그림을 바꿨을 때 브라우저가 옛 그림을 쓰지 않게 합니다
+    def art_url(name: str) -> str:
+        f = art.find(out_dir.parent / "assets", name)
+        return f"../assets/{f.name}?v={int(f.stat().st_mtime)}" if f else ""
+    court_img, portrait_img = art_url("court"), art_url("portrait")
     page = Template(template.read_text(encoding="utf-8")).safe_substitute(
         date_iso=iso,
         date_short=f"{day:%m월 %d일}",
@@ -91,6 +98,9 @@ def render(data: dict, day: date, out_dir: Path, template: Path, engine_label: s
         one_liner=_esc(one_liner),
         court_json=court_json,
         court_script=court_script,
+        court_img=court_img, portrait_img=portrait_img,
+        court_mode="has-art" if court_img else "no-art",
+        bubble_x=bubble[0], bubble_y=bubble[1],
         prev_href=f"{prev[-1]}.html" if prev else "#", prev_class="" if prev else "off",
         next_href=f"{nxt[0]}.html" if nxt else "#", next_class="" if nxt else "off",
     )

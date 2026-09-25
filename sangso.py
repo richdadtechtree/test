@@ -9,6 +9,7 @@
   python sangso.py --sample     Claude를 부르지 않고 견본 상소를 띄웁니다 (디자인 확인용)
   python sangso.py --no-open    창을 띄우지 않고 파일만 만듭니다
   python sangso.py --redraw     Claude를 부르지 않고, 지난 상소들을 지금 디자인으로 다시 그립니다
+  python sangso.py --new-art    조회 장면 그림을 새로 뽑고, 지난 상소에도 적용합니다
 
 문제가 생기면 logs/sangso.log 를 먼저 열어 보세요. 무엇이 어디서 실패했는지 적혀 있습니다.
 """
@@ -28,7 +29,7 @@ from pathlib import Path
 BASE = Path(__file__).resolve().parent
 sys.path.insert(0, str(BASE))
 
-from sangso_lib import collect, engine, prompt, render  # noqa: E402
+from sangso_lib import art, collect, engine, prompt, render  # noqa: E402
 
 OUT, ARCHIVE, LOGS = BASE / "output", BASE / "archive", BASE / "logs"
 TEMPLATE, SAMPLE = BASE / "templates" / "sangso.html", BASE / "sample" / "first_sangso.json"
@@ -48,9 +49,25 @@ def setup_logging() -> None:
     log.setLevel(logging.INFO)
 
 
+CFG: dict = {}
+
+
+def draw(*args, **kwargs) -> Path:
+    """render.render 에 설정값(말풍선 위치)을 함께 넘깁니다."""
+    return render.render(*args, bubble=tuple(CFG.get("art_bubble", [54, 30])), **kwargs)
+
+
 def load_config() -> dict:
     cfg = json.loads((BASE / "config.json").read_text(encoding="utf-8"))
     return {k: v for k, v in cfg.items() if not k.startswith("_")}
+
+
+def _save_seed(seed: int) -> None:
+    """새로 뽑은 그림 번호를 config.json 에 기록해, 마음에 들면 그 그림을 계속 쓰게 합니다."""
+    path = BASE / "config.json"
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    raw["art_seed"] = seed
+    path.write_text(json.dumps(raw, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 def wait_until(hhmm: str) -> None:
@@ -87,7 +104,7 @@ def write_today(today: date, cfg: dict) -> tuple[Path, str]:
     (ARCHIVE / f"{today.isoformat()}.json").write_text(
         json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     label = {"auto": "클로드 코드", "claude-cli": "클로드 코드", "api": cfg["api_model"]}.get(cfg["engine"], cfg["engine"])
-    return render.render(data, today, OUT, TEMPLATE, label), label
+    return draw(data, today, OUT, TEMPLATE, label), label
 
 
 def main() -> int:
@@ -97,26 +114,35 @@ def main() -> int:
     ap.add_argument("--sample", action="store_true", help="견본 상소를 띄운다")
     ap.add_argument("--no-open", action="store_true", help="창을 띄우지 않는다")
     ap.add_argument("--redraw", action="store_true", help="지난 상소들을 새 디자인으로 다시 그린다")
+    ap.add_argument("--new-art", action="store_true", help="조회 장면 그림을 새로 뽑는다 (art_seed를 바꿔서)")
     args = ap.parse_args()
 
     setup_logging()
     for d in (OUT, ARCHIVE):
         d.mkdir(exist_ok=True)
     cfg = load_config()
+    CFG.update(cfg)
     today = date.today()
     today_html = OUT / f"{today.isoformat()}.html"
+
+    # 조회 장면 그림: 없으면 처음 한 번 받아 둡니다 (실패해도 코드 그림으로 계속 진행)
+    if args.new_art:
+        cfg["art_seed"] = int(time.time()) % 100000
+        _save_seed(cfg["art_seed"])
+        args.redraw = True
+    art.ensure(BASE, cfg, force=args.new_art)
 
     if args.redraw:
         # 날짜 순서대로 다시 그려야 '지난/다음 상소' 링크가 맞게 이어집니다
         for f in sorted(ARCHIVE.glob("????-??-??.json")):
-            render.render(json.loads(f.read_text(encoding="utf-8")), date.fromisoformat(f.stem),
+            draw(json.loads(f.read_text(encoding="utf-8")), date.fromisoformat(f.stem),
                           OUT, TEMPLATE, "클로드 코드")
             log.info("다시 그림: %s", f.stem)
         if not today_html.exists():
             return 0
         page = today_html
     elif args.sample:
-        page = render.render(json.loads(SAMPLE.read_text(encoding="utf-8")), today, OUT, TEMPLATE,
+        page = draw(json.loads(SAMPLE.read_text(encoding="utf-8")), today, OUT, TEMPLATE,
                              "견본", notice="견본 상소입니다. 실제 상소는 python sangso.py 로 쓰게 하십시오.",
                              filename="sample.html")
     elif today_html.exists() and not args.force:
@@ -128,7 +154,7 @@ def main() -> int:
         except Exception as e:  # 어떤 이유로든 실패해도 아침 창은 뜨게 합니다
             log.exception("오늘 상소 작성 실패")
             src = max(ARCHIVE.glob("*.json"), default=SAMPLE)
-            page = render.render(json.loads(src.read_text(encoding="utf-8")), today, OUT, TEMPLATE,
+            page = draw(json.loads(src.read_text(encoding="utf-8")), today, OUT, TEMPLATE,
                                  "지난 상소", notice=f"오늘 상소를 쓰지 못해 지난 상소({src.stem})를 다시 올리옵니다. "
                                                    f"원인: {e} — logs/sangso.log 를 확인하시옵소서.",
                                  filename="_fallback.html")  # 오늘 파일로 저장하지 않아야 다음 실행 때 다시 시도합니다
