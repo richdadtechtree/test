@@ -214,13 +214,15 @@ body.vertical .notice { margin: 0 0 0 24px; }
   background: linear-gradient(180deg, #fffaf0, #f1e5c9); border: 2px solid #3a2a1a;
   box-shadow: 0 10px 28px rgba(0,0,0,.5), inset 0 0 0 3px #fffaf0, inset 0 0 0 4px rgba(201,162,74,.7);
   animation: rise .6s .2s both; }
-.say::after { content: ""; position: absolute; left: 83%; bottom: -15px; width: 22px; height: 16px; background: #3a2a1a;
-  clip-path: polygon(0 0, 100% 0, 45% 100%); }
-.say::before { content: ""; position: absolute; left: calc(83% + 3px); bottom: -10px; width: 16px; height: 12px; background: #f1e5c9;
-  clip-path: polygon(0 0, 100% 0, 45% 100%); z-index: 1; }
+/* 말풍선 꼬리: 그림 파일을 쓸 땐 court.js 가 --tail-x(꼬리 위치)·--tail-len(길이)을 정해 그림 속 제갈량을 가리키게 합니다 */
+.say::after { content: ""; position: absolute; left: var(--tail-x, 83%); bottom: calc(1px - var(--tail-len, 16px)); width: 22px; height: var(--tail-len, 16px);
+  margin-left: -11px; background: #3a2a1a; clip-path: polygon(0 0, 100% 0, 50% 100%); }
+.say::before { content: ""; position: absolute; left: var(--tail-x, 83%); bottom: calc(6px - var(--tail-len, 16px)); width: 16px; height: calc(var(--tail-len, 16px) - 4px);
+  margin-left: -8px; background: #f1e5c9; clip-path: polygon(0 0, 100% 0, 50% 100%); z-index: 1; }
 .say-face { flex: none; width: clamp(48px, 12%, 84px); aspect-ratio: 240 / 280; border-radius: 6px; overflow: hidden;
   border: 2px solid #3a2a1a; box-shadow: inset 0 0 0 1px rgba(201,162,74,.6); background: #2a1a10; }
 .say-face canvas, .say-face img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
+.say-face .face-art[src=""] { display: none; } /* 초상화 파일이 없으면 깨진 그림 대신 코드 초상화(canvas)를 보입니다 */
 .say-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .say-name { font-family: var(--hanja); font-weight: 700; color: #a3281c; font-size: clamp(11px, 1.35vw, 14px); letter-spacing: .1em; }
 .say-name span { font-family: var(--serif); font-weight: 400; color: #7a6a52; letter-spacing: .02em; margin-left: 6px; font-size: .9em; }

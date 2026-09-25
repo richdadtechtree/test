@@ -53,8 +53,9 @@ CFG: dict = {}
 
 
 def draw(*args, **kwargs) -> Path:
-    """render.render 에 설정값(말풍선 위치)을 함께 넘깁니다."""
-    return render.render(*args, bubble=tuple(CFG.get("art_bubble", [54, 30])), **kwargs)
+    """render.render 에 설정값(말풍선 꼬리·신하 대답 위치)을 함께 넘깁니다."""
+    return render.render(*args, bubble=tuple(CFG.get("art_bubble", [50, 50])),
+                         reply_slots=CFG.get("art_replies"), **kwargs)
 
 
 def load_config() -> dict:

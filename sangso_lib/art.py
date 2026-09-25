@@ -4,16 +4,21 @@ art.py — 조회 장면의 '그림'을 준비하는 곳
 우선순위 (위에서부터 먼저 있는 것을 씁니다)
   1) assets/court.jpg (또는 .png/.webp)   ← 내가 직접 만든 그림 (힉스필드·ChatGPT·미드저니 등)
      assets/portrait.jpg (또는 .png/.webp) ← 대화창 초상화
-  2) assets/court_auto.jpg, portrait_auto.jpg ← 이 프로그램이 무료 이미지 생성 서비스에서 받아 둔 그림
-  3) 둘 다 없으면 → templates/court.js 가 코드로 그린 그림
+  2) assets/court_auto.jpg, portrait_auto.jpg ← python sangso.py --new-art 로 무료 이미지 생성 서비스에서 새로 뽑은 그림
+  3) assets/court_default.jpg, portrait_default.jpg ← 저장소에 함께 들어 있는 기본 그림 (여러 장 뽑아 골라 둔 것)
+  4) 모두 없으면 → templates/court.js 가 코드로 그린 그림
 
-자동 그림은 Pollinations(https://pollinations.ai)라는, 가입 없이 쓰는 무료 이미지 생성 서비스에서
-처음 한 번만 받아 저장합니다. 매일 새로 받지 않으므로 아침 창이 늦어지지 않습니다.
+자동 그림은 Pollinations(https://pollinations.ai)라는, 가입 없이 쓰는 무료 이미지 생성 서비스에서 받습니다.
+기본 그림이 이미 있으므로 평소에는 받지 않고(아침 창이 늦어지지 않게), --new-art 를 줬을 때나
+기본 그림까지 지워져 쓸 그림이 하나도 없을 때만 받습니다.
 
 디버깅 힌트
   - 그림이 안 바뀐다 → logs/sangso.log 에서 '그림' 으로 검색하세요.
   - 무료 서비스라 가끔 느리거나 막힐 수 있습니다. 실패하면 하루 뒤에 다시 시도하고, 그동안은 코드 그림을 씁니다.
   - 마음에 안 들면: python sangso.py --new-art  (config.json 의 art_seed 를 바꿔 다시 뽑습니다)
+  - 새로 뽑은 그림이 기본 그림보다 못하면: assets/court_auto.jpg 를 지우면 기본 그림으로 돌아갑니다.
+  - 2026년 9월 현재 무료(가입 없는) 사용자에게는 sana 모델만 열려 있어, model=flux 를 적어도
+    1024×576 크기의 sana 그림이 오고 오른쪽 아래에 워터마크가 찍힙니다. 기본 그림은 워터마크를 잘라 낸 것입니다.
 """
 
 from __future__ import annotations
@@ -55,12 +60,16 @@ URL = "https://image.pollinations.ai/prompt/{prompt}?width={w}&height={h}&seed={
 
 
 def find(assets: Path, name: str) -> Path | None:
-    """사용자 그림(name.*)이 있으면 그것, 없으면 자동 그림(name_auto.jpg)."""
+    """쓸 그림 파일을 우선순위대로 찾습니다: 사용자 그림(name.*) → 자동 그림(name_auto.jpg) → 기본 그림(name_default.jpg).
+    하나도 없으면 None → 화면은 코드 그림(court.js)을 씁니다."""
     for ext in EXTS:
         if (assets / f"{name}{ext}").is_file():
             return assets / f"{name}{ext}"
-    auto = assets / f"{name}_auto.jpg"
-    return auto if auto.is_file() else None
+    for suffix in ("_auto", "_default"):
+        f = assets / f"{name}{suffix}.jpg"
+        if f.is_file():
+            return f
+    return None
 
 
 def _download(prompt: str, w: int, h: int, seed: int, dest: Path) -> bool:
@@ -83,7 +92,8 @@ def _download(prompt: str, w: int, h: int, seed: int, dest: Path) -> bool:
 
 
 def ensure(base: Path, cfg: dict, force: bool = False) -> None:
-    """자동 그림이 없으면 받아 둡니다. 실패해도 프로그램은 계속 진행합니다."""
+    """쓸 그림이 하나도 없거나 force(--new-art)일 때만 자동 그림을 받습니다. 실패해도 프로그램은 계속 진행합니다.
+    기본 그림(court_default.jpg)이 있으면 find() 가 그것을 돌려주므로 평소에는 아무것도 받지 않습니다."""
     if not cfg.get("auto_art", True):
         return
     assets = base / "assets"

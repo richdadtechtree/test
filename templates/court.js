@@ -353,8 +353,11 @@
       go = document.getElementById("court-go");
   var SAY = DATA.saying || (sayText ? sayText.textContent : "");
   var REPLIES = DATA.replies || [];
+  // 그림 파일용 기본 자리 (assets/court_default.jpg 에 맞춤). config.json 의 art_replies 로 바꿀 수 있습니다.
+  // 각 [가로 %, 세로 %] 는 대답 말풍선 꼬리 끝(아래 가운데) 위치입니다.
+  var ART_SLOTS = [[21, 66], [79, 66], [27, 86], [73, 86]];
   function slots() {
-    if (HAS_ART) return [[35, 62], [65, 62], [14, 74], [86, 74]];
+    if (HAS_ART) return (DATA.art_slots && DATA.art_slots.length ? DATA.art_slots : ART_SLOTS);
     return [[-2.35, 8.6], [2.35, 8.6], [-3.8, 5.7], [3.8, 5.7]].map(function (k) {
       var p = P(k[0], .85, k[1]);
       return [p[0] / W * 100, p[1] / H * 100];
@@ -371,9 +374,10 @@
     sayText.textContent = "";
     function tick() {
       pos++; sayText.textContent = SAY.slice(0, pos);
+      aimTail(); // 글이 늘어 말풍선이 길어지면 꼬리 길이도 다시 맞춥니다
       if (pos < SAY.length) later(tick, speed); else later(showReplies, still ? 0 : 700);
     }
-    if (still) { sayText.textContent = SAY; showReplies(); } else later(tick, 500);
+    if (still) { sayText.textContent = SAY; aimTail(); showReplies(); } else later(tick, 500);
     function showReplies() {
       REPLIES.forEach(function (r, i) {
         later(function () {
@@ -397,6 +401,25 @@
     if (r.right > v.right - 6) dx = v.right - 6 - r.right;
     if (dx) el.style.left = "calc(" + el.style.left + " + " + dx + "px)";
   }
+  /* 승상 말풍선의 꼬리를 그림 속 제갈량(config.json 의 art_bubble = [가로 %, 세로 %])에게 겨눕니다.
+   * 말풍선은 제자리에 두고, 꼬리의 가로 위치와 길이만 바꿉니다. 코드 그림일 땐 CSS 기본값(짧은 꼬리)을 씁니다. */
+  var sayEl = document.getElementById("say");
+  function aimTail() {
+    if (!sayEl) return;
+    var tip = DATA.art_tip;
+    if (!HAS_ART || !tip || tip.length < 2 || getComputedStyle(sayEl).position !== "absolute") {
+      sayEl.style.removeProperty("--tail-x"); sayEl.style.removeProperty("--tail-len"); return;
+    }
+    var v = courtEl.querySelector(".court-view").getBoundingClientRect(), r = sayEl.getBoundingClientRect();
+    var tx = v.left + v.width * tip[0] / 100, ty = v.top + v.height * tip[1] / 100;
+    var x = Math.max(24, Math.min(r.width - 24, tx - r.left));      // 말풍선 가장자리(둥근 모서리)는 피합니다
+    var len = Math.max(16, Math.min(v.height * .22, ty - r.bottom - 6)); // 너무 길면 어색하므로 화면 높이의 22%까지만
+    sayEl.style.setProperty("--tail-x", x + "px");
+    sayEl.style.setProperty("--tail-len", len + "px");
+  }
+  aimTail();
+  window.addEventListener("resize", aimTail);
+  if (artImg) artImg.addEventListener("error", aimTail);
   if (replay) replay.addEventListener("click", play);
   if (go) go.addEventListener("click", function () { document.querySelector(".stage").scrollIntoView({ behavior: still ? "auto" : "smooth" }); });
   play();

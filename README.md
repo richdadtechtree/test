@@ -10,10 +10,12 @@
 ### 장면 그림은 어디서 오나요? (위에서부터 먼저 있는 것을 씁니다)
 
 1. **내가 넣은 그림** — `assets/court.jpg`(장면)와 `assets/portrait.jpg`(초상화, .png도 됨)를 넣으면 그걸 씁니다. 이 파일들은 저작권이 있는 그림일 수 있어 git에 올라가지 않게 해 두었습니다. 힉스필드·ChatGPT·미드저니 등 어디서 만든 그림이든 됩니다. 그림 주문문(프롬프트)은 `sangso_lib/art.py`의 `COURT_PROMPT`, `PORTRAIT_PROMPT`를 그대로 복사해 쓰면 됩니다. (장면은 16:9 가로 그림, 가운데 제갈량이 오게)
-2. **자동 그림** — 없으면 처음 실행할 때 **가입 없이 쓰는 무료 이미지 생성 서비스 [Pollinations](https://pollinations.ai)**에서 한 번 받아 `assets/`에 저장해 둡니다(1~3분). 매일 새로 받지 않아서 아침 창이 늦어지지 않습니다.
-   - 마음에 안 들면 `python sangso.py --new-art` → 다른 그림을 뽑아 지난 상소에도 적용합니다.
-   - 말풍선이 제갈량 얼굴에서 떨어져 있으면 `config.json`의 `art_bubble` 값(가로 %, 세로 %)을 조절하세요.
-3. **코드 그림** — 둘 다 없거나 받기에 실패하면 `templates/court.js`가 그린 그림으로 뜹니다(인터넷 불필요).
+2. **새로 뽑은 그림** — `python sangso.py --new-art` 를 실행하면 **가입 없이 쓰는 무료 이미지 생성 서비스 [Pollinations](https://pollinations.ai)**에서 다른 그림을 뽑아 `assets/court_auto.jpg`에 저장하고 지난 상소에도 적용합니다(1~3분).
+   - 새 그림이 기본 그림보다 못하면 `assets/court_auto.jpg`(와 `portrait_auto.jpg`)를 지우면 기본 그림으로 돌아갑니다.
+   - 참고: 2026년 9월 현재 무료 사용자에게는 `sana` 모델만 열려 있어 품질이 들쭉날쭉하고, 오른쪽 아래에 워터마크가 찍힙니다.
+3. **기본 그림** — 저장소에 들어 있는 `assets/court_default.jpg`(장면), `assets/portrait_default.jpg`(초상화). Pollinations에서 `COURT_PROMPT`·`PORTRAIT_PROMPT`로 시드(seed)를 바꿔 수십 장 뽑아 가장 나은 것을 고르고 워터마크를 잘라 낸 그림입니다. 그래서 처음 설치해도 바로 그림이 뜹니다.
+   - 승상 말풍선의 꼬리는 `config.json`의 `art_bubble`(가로 %, 세로 %) 쪽을 가리킵니다. 신하 대답 자리는 `art_replies`. 내 그림을 넣었다면 그림 속 제갈량 머리·빈 자리에 맞게 바꾸세요.
+4. **코드 그림** — 위 그림이 하나도 없거나 그림 파일이 깨졌으면 `templates/court.js`가 그린 그림으로 뜹니다(인터넷 불필요).
 
 - **제1장 · 클로드 코드 운용책** — 초보인 내가 클로드 코드를 더 잘 쓰는 법 (공백 제외 2,000자 이상)
 - **제2장 · 대업과 삶의 방향** — 내 비즈니스와 삶에 대한 조언 (공백 제외 3,000자 이상)
