@@ -16,11 +16,11 @@
 (function () {
   var cv = document.getElementById("court-canvas");
   if (!cv || !cv.getContext) return;
-  // 그림 파일(assets/court.jpg 등)을 쓰는 중이면 장면은 그리지 않고 대화창만 움직입니다.
+  // 그림 파일(assets/court.jpg 등)을 쓰는 중이면 장면은 그리지 않고 말풍선만 움직입니다.
   // 그림 파일이 깨졌으면(onerror) 코드 그림으로 되돌아갑니다.
   var courtEl = document.querySelector(".court"), artImg = document.getElementById("court-art");
   var HAS_ART = courtEl && courtEl.classList.contains("has-art");
-  var W = 1280, H = 720, F = 700, HOR = 250, CH = 1.6;
+  var W = 1280, H = 720, F = 700, HOR = 300, CH = 1.6;
   var K = Math.min(2, window.devicePixelRatio || 1); // 고해상도 화면에서도 선명하게
   cv.width = W * K; cv.height = H * K;
   var out = cv.getContext("2d");
@@ -335,55 +335,71 @@
   var last = 0;
   function loop(tt) { if (tt - last > 45) { frame(tt); last = tt; } requestAnimationFrame(loop); }
 
-  /* ── 말풍선: 제갈량 얼굴 오른쪽 위에 붙입니다 ─────────────── */
-  var bubble = document.getElementById("court-bubble");
-  function placeBubble() {
-    if (!bubble) return;
-    bubble.style.left = ((ZG[0] + SZ * .3) / W * 100) + "%";   // 얼굴 바로 오른쪽
-    bubble.style.top = ((ZG[1] - SZ * 1.6) / H * 100) + "%";
-  }
   function startScene() {
     frame(0);
     if (!still) requestAnimationFrame(loop);
-    placeBubble();
   }
-  if (HAS_ART && artImg && artImg.complete && !artImg.naturalWidth) HAS_ART = false, courtEl.classList.remove("has-art"); // 이미 로드 실패
+  if (HAS_ART && artImg && artImg.complete && !artImg.naturalWidth) { HAS_ART = false; courtEl.classList.remove("has-art"); } // 이미 로드 실패
   if (!HAS_ART) startScene();
   else if (artImg) artImg.addEventListener("error", function () { // 그림 파일이 깨졌으면 코드 그림으로
-    courtEl.classList.remove("has-art"); startScene();
+    HAS_ART = false; courtEl.classList.remove("has-art"); startScene(); play();
   });
 
-  /* ── 대화창: 클릭(또는 Enter/스페이스)하면 다음 대사 ──────── */
-  var LINES = [
-    "주공, 오늘의 조회를 여옵니다. 문무백관이 모두 엎드려 대령하였사옵니다.",
-    DATA.one_liner ? "오늘의 한마디이옵니다. 「" + DATA.one_liner + "」" : "",
-    DATA.task_cc ? "오늘의 첫째 군령 — " + DATA.task_cc : "",
-    DATA.task_life ? "오늘의 둘째 군령 — " + DATA.task_life : "",
-    "자세한 계책은 아래 상소에 적어 올렸사옵니다. 두루마리를 펼쳐 보시옵소서."
-  ].filter(Boolean);
-  var dlg = document.getElementById("court-dialog"), txt = document.getElementById("court-text"),
-      more = document.getElementById("court-more"), go = document.getElementById("court-go");
-  if (dlg && txt) {
-    var n = 0, pos = 0, timer = null;
-    var done = function () {
-      clearInterval(timer); pos = LINES[n].length; txt.textContent = LINES[n];
-      var lastLine = n === LINES.length - 1;
-      more.hidden = lastLine; go.hidden = !lastLine;
-    };
-    var type = function () {
-      clearInterval(timer); pos = 0; txt.textContent = ""; more.hidden = true; go.hidden = true;
-      if (still) { done(); return; }
-      timer = setInterval(function () { pos++; txt.textContent = LINES[n].slice(0, pos); if (pos >= LINES[n].length) done(); }, 30);
-    };
-    var next = function () {
-      if (pos < LINES[n].length) { done(); return; } // 글자가 나오는 중이면 한 번에 다 보여 주기
-      n = (n + 1) % LINES.length; type();
-    };
-    dlg.addEventListener("click", function (e) { if (e.target !== go) next(); });
-    dlg.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); next(); } });
-    go.addEventListener("click", function () { document.querySelector(".stage").scrollIntoView({ behavior: still ? "auto" : "smooth" }); });
-    type();
+  /* ── 조회 진행: 승상의 한마디 → 신하들이 차례로 대답 ────────────
+   * 대답 말풍선은 엎드린 신하의 머리 위에 뜹니다.
+   * 코드 그림일 땐 실제 신하 위치(P 함수)로, 그림 파일일 땐 대략적인 자리(%)로 놓습니다. */
+  var sayText = document.getElementById("say-text"), saySrc = document.getElementById("say-src"),
+      box = document.getElementById("replies"), replay = document.getElementById("court-replay"),
+      go = document.getElementById("court-go");
+  var SAY = DATA.saying || (sayText ? sayText.textContent : "");
+  var REPLIES = DATA.replies || [];
+  function slots() {
+    if (HAS_ART) return [[35, 62], [65, 62], [14, 74], [86, 74]];
+    return [[-2.35, 8.6], [2.35, 8.6], [-3.8, 5.7], [3.8, 5.7]].map(function (k) {
+      var p = P(k[0], .85, k[1]);
+      return [p[0] / W * 100, p[1] / H * 100];
+    });
   }
+  var timers = [];
+  function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+  function play() {
+    timers.forEach(clearTimeout); timers = [];
+    if (!sayText || !box) return;
+    box.innerHTML = "";
+    if (saySrc) saySrc.textContent = DATA.event ? "— 근거: " + DATA.event : "";
+    var pos = 0, S_ = slots(), speed = still ? 0 : 38;
+    sayText.textContent = "";
+    function tick() {
+      pos++; sayText.textContent = SAY.slice(0, pos);
+      if (pos < SAY.length) later(tick, speed); else later(showReplies, still ? 0 : 700);
+    }
+    if (still) { sayText.textContent = SAY; showReplies(); } else later(tick, 500);
+    function showReplies() {
+      REPLIES.forEach(function (r, i) {
+        later(function () {
+          var el = document.createElement("div");
+          el.className = "reply";
+          var s = S_[i % S_.length];
+          el.style.left = s[0] + "%"; el.style.top = s[1] + "%";
+          var name = document.createElement("b"); name.textContent = r.who || "신하";
+          el.appendChild(name); el.appendChild(document.createTextNode(r.text));
+          box.appendChild(el);
+          fit(el);
+        }, still ? 0 : i * 1600);
+      });
+    }
+  }
+  // 말풍선이 화면 밖으로 삐져나가지 않게 좌우를 당겨 줍니다
+  function fit(el) {
+    if (getComputedStyle(el).position !== "absolute") return;
+    var v = box.getBoundingClientRect(), r = el.getBoundingClientRect(), dx = 0;
+    if (r.left < v.left + 6) dx = v.left + 6 - r.left;
+    if (r.right > v.right - 6) dx = v.right - 6 - r.right;
+    if (dx) el.style.left = "calc(" + el.style.left + " + " + dx + "px)";
+  }
+  if (replay) replay.addEventListener("click", play);
+  if (go) go.addEventListener("click", function () { document.querySelector(".stage").scrollIntoView({ behavior: still ? "auto" : "smooth" }); });
+  play();
 
   /* ── 대화창 초상화 (240×280) ───────────────────────────────── */
   var pc = document.getElementById("court-portrait");

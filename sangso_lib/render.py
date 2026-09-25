@@ -61,9 +61,17 @@ def render(data: dict, day: date, out_dir: Path, template: Path, engine_label: s
     nxt = [d for d in days if d > iso]
 
     weekday = "월화수목금토일"[day.weekday()]
-    # 오늘의 한마디: 예전 상소(이 기능 이전)에는 없으므로 한 구절 풀이로 대신합니다
-    one_liner = data.get("one_liner") or motto.get("meaning") or ""
-    court = {"one_liner": one_liner, "task_cc": tasks.get("claude_code", ""), "task_life": tasks.get("life", "")}
+    # 조회 대화: 예전 상소(이 기능 이전)에는 없으므로 한 구절과 기본 대답으로 대신합니다
+    c = data.get("court") or {}
+    one_liner = c.get("saying") or data.get("one_liner") or motto.get("meaning") or ""
+    idiom = c.get("idiom") or {"hanja": motto.get("hanja", ""), "reading": motto.get("reading", ""),
+                               "meaning": motto.get("meaning", ""), "source": motto.get("source", "")}
+    replies = [r for r in (c.get("replies") or []) if isinstance(r, dict) and r.get("text")][:4] or [
+        {"who": "장완", "text": "승상의 말씀, 깊이 새기겠사옵니다."},
+        {"who": "비의", "text": "주공께서 들으시면 분명 웃으실 것이옵니다."},
+        {"who": "강유", "text": "소장, 오늘도 한 걸음 나아가겠나이다!"},
+    ]
+    court = {"saying": one_liner, "idiom": idiom, "replies": replies, "event": c.get("event", "")}
     # </script> 같은 문자열이 글에 섞여도 스크립트가 끊기지 않도록 "</" 를 바꿔 둡니다
     court_json = json.dumps(court, ensure_ascii=False).replace("</", "<\\/")
     court_script = (template.parent / "court.js").read_text(encoding="utf-8")
@@ -96,6 +104,8 @@ def render(data: dict, day: date, out_dir: Path, template: Path, engine_label: s
         engine=_esc(engine_label),
         notice=_esc(notice),
         one_liner=_esc(one_liner),
+        idiom_hanja=_esc(idiom.get("hanja")), idiom_reading=_esc(idiom.get("reading")),
+        idiom_meaning=_esc(idiom.get("meaning")), idiom_source=_esc(idiom.get("source")),
         court_json=court_json,
         court_script=court_script,
         court_img=court_img, portrait_img=portrait_img,

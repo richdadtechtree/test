@@ -185,5 +185,7 @@ def read_recent_sangso(archive: Path, n: int = 5) -> str:
                 for s in (d.get(part) or {}).get("sections", [])]
         lines.append(f"- {f.stem}: 제목「{d.get('title','')}」 / 소제목: {', '.join(subs)} / "
                      f"군령: {tasks.get('claude_code','')} | {tasks.get('life','')} / "
-                     f"한 구절: {(d.get('motto') or {}).get('hanja','')}")
+                     f"한 구절: {(d.get('motto') or {}).get('hanja','')} / "
+                     f"조회 사자성어: {((d.get('court') or {}).get('idiom') or {}).get('hanja','')} / "
+                     f"한마디 근거: {(d.get('court') or {}).get('event','')}")
     return "\n".join(lines) or "(지난 상소 없음 — 오늘이 첫 상소)"

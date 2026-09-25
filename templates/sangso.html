@@ -200,55 +200,72 @@ body.vertical .notice { margin: 0 0 0 24px; }
 .court-art, .face-art { display: none; width: 100%; height: 100%; object-fit: cover; }
 .court.has-art .court-art { display: block; animation: kenburns 40s ease-in-out infinite alternate; }
 .court.has-art #court-canvas { display: none; }
-.court.has-art .court-view::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+.court.has-art .court-stage::after { content: ""; position: absolute; inset: 0; pointer-events: none;
   background: radial-gradient(ellipse at 50% 40%, transparent 55%, rgba(0,0,0,.55)), linear-gradient(transparent 60%, rgba(10,6,4,.7)); }
-.court.has-art .court-view > :not(img):not(canvas) { z-index: 2; }
-.court.has-art .court-bubble { left: var(--bx); top: var(--by); }
 .face-art[src]:not([src=""]) { display: block; }
 .face-art[src]:not([src=""]) + canvas { display: none; }
 @keyframes kenburns { from { transform: scale(1); } to { transform: scale(1.06) translate(-1%, -1%); } }
 @media (prefers-reduced-motion: reduce) { .court.has-art .court-art { animation: none; } }
-.court-hud { position: absolute; top: 4.5%; left: 4%; text-align: left; color: #f0dca0;
-  font-family: var(--hanja); letter-spacing: .5em; font-size: clamp(10px, 1.3vw, 14px); text-shadow: 0 2px 8px rgba(0,0,0,.8); white-space: nowrap; }
-.court-hud small { display: block; letter-spacing: .15em; font-family: var(--serif); color: rgba(240,220,160,.7); font-size: .8em; margin-top: 2px; }
-.court-bubble { position: absolute; transform: translateY(-100%); width: max-content; max-width: min(34%, 320px);
-  background: linear-gradient(180deg, #fffaf0, #f3e8d0); color: #2a1d12; border: 1px solid #c9a24a; border-radius: 4px 14px 14px 14px;
-  padding: 10px 14px 11px; font-size: clamp(11px, 1.45vw, 15.5px); line-height: 1.6; word-break: keep-all;
-  box-shadow: 0 10px 24px rgba(0,0,0,.45), inset 0 0 0 3px rgba(255,255,255,.6); animation: rise .7s .5s both; }
-.court-bubble::after { content: ""; position: absolute; left: -1px; bottom: -13px; width: 16px; height: 14px;
-  background: #f3e8d0; border-left: 1px solid #c9a24a; clip-path: polygon(0 0, 100% 0, 0 100%); }
-.court-bubble small { display: flex; align-items: center; gap: 6px; color: #a3281c; font-weight: 700; font-size: .74em; letter-spacing: .12em; margin-bottom: 3px; }
-.court-bubble small::before { content: "言"; font-family: var(--hanja); display: inline-grid; place-items: center; width: 1.6em; height: 1.6em;
-  background: #a3281c; color: #fff3e3; border-radius: 3px; font-size: .95em; letter-spacing: 0; }
-@keyframes rise { from { opacity: 0; transform: translateY(-88%); } to { opacity: 1; transform: translateY(-100%); } }
-.court-dialog { position: absolute; left: 3%; right: 3%; bottom: 4%; display: flex; align-items: flex-end; cursor: pointer; }
-.court-dialog:focus-visible { outline: 2px solid #f0cf78; outline-offset: 4px; border-radius: 6px; }
-.court-face { flex: none; width: clamp(64px, 13%, 128px); aspect-ratio: 240 / 280; border-radius: 6px; overflow: hidden; margin-right: -14px; z-index: 1;
-  border: 2px solid #c9a24a; box-shadow: 0 8px 20px rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.4); }
-.court-face canvas { display: block; width: 100%; height: 100%; }
-.court-box { flex: 1; min-height: clamp(66px, 12.5vw, 118px); position: relative; padding: 12px 20px 14px 32px; border-radius: 6px;
-  background: linear-gradient(180deg, rgba(34,18,11,.9), rgba(18,10,6,.94)); backdrop-filter: blur(4px);
-  border: 1px solid rgba(201,162,74,.8); box-shadow: 0 10px 30px rgba(0,0,0,.5), inset 0 0 0 4px rgba(18,10,6,.9), inset 0 0 0 5px rgba(201,162,74,.35); }
-.court-name { display: inline-flex; align-items: baseline; gap: 8px; margin-bottom: 4px; font-family: var(--hanja); font-weight: 700;
-  color: #f0cf78; font-size: clamp(12px, 1.55vw, 16px); letter-spacing: .08em; }
-.court-name span { font-family: var(--serif); font-weight: 400; color: rgba(240,220,160,.65); font-size: .82em; letter-spacing: .04em; }
-.court-text { font-size: clamp(12px, 1.7vw, 17.5px); line-height: 1.75; color: #f6ead0; min-height: 3.5em; word-break: keep-all; }
-.court-more { position: absolute; right: 16px; bottom: 8px; color: #f0cf78; font-size: 13px; animation: bob 1.2s ease-in-out infinite; }
-@keyframes bob { 50% { transform: translateY(3px); opacity: .5; } }
-.court-go { position: absolute; right: 12px; bottom: 10px; font: 700 13px var(--serif); color: #1d120a; cursor: pointer; letter-spacing: .04em;
-  background: linear-gradient(180deg, #f3d98a, #c9a24a); border: 1px solid #7a5a1e; border-radius: 999px; padding: 6px 14px; box-shadow: 0 3px 10px rgba(0,0,0,.4); }
-.court-go:hover { filter: brightness(1.08); }
-.court-hint { position: absolute; right: 3%; top: 4.5%; font-size: 11px; color: rgba(240,220,160,.6); letter-spacing: .05em; }
-@media (prefers-reduced-motion: reduce) { .court-bubble, .court-more { animation: none; } }
+.court-stage { position: absolute; inset: 0; overflow: hidden; }
+.court-stage > * { position: absolute; inset: 0; }
+/* 승상의 큰 말풍선 */
+.say { position: absolute; z-index: 3; top: 3.5%; left: 4%; width: 54%; display: flex; gap: 12px; align-items: stretch;
+  padding: 10px 14px 10px 10px; border-radius: 10px; color: #2a1d12;
+  background: linear-gradient(180deg, #fffaf0, #f1e5c9); border: 2px solid #3a2a1a;
+  box-shadow: 0 10px 28px rgba(0,0,0,.5), inset 0 0 0 3px #fffaf0, inset 0 0 0 4px rgba(201,162,74,.7);
+  animation: rise .6s .2s both; }
+.say::after { content: ""; position: absolute; left: 83%; bottom: -15px; width: 22px; height: 16px; background: #3a2a1a;
+  clip-path: polygon(0 0, 100% 0, 45% 100%); }
+.say::before { content: ""; position: absolute; left: calc(83% + 3px); bottom: -10px; width: 16px; height: 12px; background: #f1e5c9;
+  clip-path: polygon(0 0, 100% 0, 45% 100%); z-index: 1; }
+.say-face { flex: none; width: clamp(48px, 12%, 84px); aspect-ratio: 240 / 280; border-radius: 6px; overflow: hidden;
+  border: 2px solid #3a2a1a; box-shadow: inset 0 0 0 1px rgba(201,162,74,.6); background: #2a1a10; }
+.say-face canvas, .say-face img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
+.say-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.say-name { font-family: var(--hanja); font-weight: 700; color: #a3281c; font-size: clamp(11px, 1.35vw, 14px); letter-spacing: .1em; }
+.say-name span { font-family: var(--serif); font-weight: 400; color: #7a6a52; letter-spacing: .02em; margin-left: 6px; font-size: .9em; }
+.say-text { margin: 2px 0 0; font-size: clamp(11.5px, 1.5vw, 15.5px); line-height: 1.55; word-break: keep-all; min-height: 3.2em; text-indent: 0; }
+.say-src { margin-top: auto; padding-top: 4px; font-size: clamp(9px, 1.05vw, 11.5px); color: #8a7658; }
+.say-src:empty { display: none; }
+/* 오늘의 사자성어 카드 */
+.idiom { position: absolute; z-index: 3; top: 3.5%; right: 3%; width: 27%; padding: 12px 16px 12px; border-radius: 8px; color: #f3e6c8;
+  background: linear-gradient(180deg, rgba(40,20,12,.92), rgba(20,11,7,.94)); border: 1px solid #c9a24a;
+  box-shadow: 0 10px 26px rgba(0,0,0,.5), inset 0 0 0 4px rgba(20,11,7,.9), inset 0 0 0 5px rgba(201,162,74,.35); animation: rise .6s .5s both; }
+.idiom-date { font-size: clamp(9px, 1vw, 11px); color: rgba(240,210,140,.7); letter-spacing: .08em; }
+.idiom-hj { font-family: var(--hanja); font-weight: 900; font-size: clamp(18px, 2.9vw, 30px); color: #f0cf78; letter-spacing: .12em; line-height: 1.3; margin: 2px 0 4px; }
+.idiom-hj span { display: block; font-family: var(--serif); font-weight: 400; font-size: .45em; color: rgba(243,230,200,.8); letter-spacing: .3em; }
+.idiom p { margin: 0; font-size: clamp(10.5px, 1.3vw, 13.5px); line-height: 1.6; text-indent: 0; word-break: keep-all; }
+.idiom small { display: block; margin-top: 4px; font-size: clamp(9px, 1vw, 11px); color: rgba(240,210,140,.6); }
+/* 신하들의 대답 */
+.replies { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.reply { position: absolute; transform: translate(-50%, -100%); width: max-content; max-width: min(19%, 210px);
+  padding: 7px 11px 8px; border-radius: 10px; background: #fffaf0; color: #2a1d12; border: 1.5px solid #3a2a1a;
+  font-size: clamp(10px, 1.2vw, 13px); line-height: 1.45; word-break: keep-all; box-shadow: 0 6px 16px rgba(0,0,0,.45);
+  opacity: 0; animation: pop .45s cubic-bezier(.2,1.4,.4,1) forwards; }
+.reply::after { content: ""; position: absolute; left: 50%; bottom: -9px; margin-left: -7px; width: 14px; height: 10px; background: #3a2a1a;
+  clip-path: polygon(0 0, 100% 0, 50% 100%); }
+.reply b { display: inline-block; margin: 0 6px 2px 0; padding: 1px 7px; border-radius: 3px; background: #8d2019; color: #fff3e0;
+  font-size: .82em; font-weight: 700; letter-spacing: .06em; }
+@keyframes pop { from { opacity: 0; transform: translate(-50%, -80%) scale(.7); } to { opacity: 1; transform: translate(-50%, -100%) scale(1); } }
+@keyframes rise { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
+.court-ctl { position: absolute; z-index: 3; right: 3%; bottom: 4%; display: flex; gap: 8px; }
+.court-ctl button { font: 13px var(--serif); padding: 7px 14px; border-radius: 999px; cursor: pointer; color: #f3e6c8;
+  background: rgba(20,11,7,.8); border: 1px solid rgba(201,162,74,.7); box-shadow: 0 4px 12px rgba(0,0,0,.4); }
+.court-ctl button.gold { color: #1d120a; font-weight: 700; background: linear-gradient(180deg, #f3d98a, #c9a24a); border-color: #7a5a1e; }
+.court-ctl button:hover { filter: brightness(1.1); }
+@media (prefers-reduced-motion: reduce) { .say, .idiom, .reply { animation: none; opacity: 1; } }
 @media (max-width: 640px) {
   .court { margin: 0 -8px 26px; padding: 4px; }
   .court::before, .court::after { display: none; }
-  .court-view { overflow: visible; }
-  .court-dialog { position: static; margin-top: 8px; }
-  .court-hint { display: none; }
-  .court-hud { top: 3%; left: 3%; }
-  .court-bubble { max-width: 40%; font-size: 9.5px; line-height: 1.45; padding: 5px 8px; }
-  .court-box { padding: 10px 14px 12px 24px; }
+  /* 좁은 화면: 그림 아래로 말풍선·카드·대답을 차례로 쌓습니다 */
+  .court-view { aspect-ratio: auto; overflow: visible; display: flex; flex-direction: column; gap: 8px; }
+  .court-stage { position: relative; aspect-ratio: 1280 / 720; }
+  .say, .idiom, .replies, .court-ctl { position: static; width: auto; }
+  .say::after, .say::before { display: none; }
+  .replies { display: flex; flex-direction: column; gap: 6px; }
+  .reply { position: static; transform: none; max-width: 100%; animation-name: rise; }
+  .reply::after { display: none; }
+  .court-ctl { justify-content: flex-end; }
 }
 
 @media (max-width: 640px) {
@@ -274,21 +291,33 @@ body.vertical .notice { margin: 0 0 0 24px; }
 </svg>
 
 <!-- 조회 장면: 승상 제갈량과 엎드린 신하들 (그림은 templates/court.js 가 그립니다) -->
-<section class="court $court_mode" aria-label="승상부 조회 장면" style="--bx: $bubble_x%; --by: $bubble_y%;">
+<section class="court $court_mode" aria-label="승상부 조회 장면">
   <div class="court-view">
-    <img class="court-art" id="court-art" src="$court_img" alt="궁궐 대전에서 승상 제갈량이 단상에 서고 신하들이 엎드려 있는 그림">
-    <canvas id="court-canvas" width="1280" height="720" role="img" aria-label="궁궐 대전에서 승상 제갈량이 단상에 서고 신하들이 엎드려 있는 장면"></canvas>
-    <div class="court-hud">丞相府 朝會<small>$ganji · $date_short</small></div>
-    <div class="court-hint">대화창을 누르면 다음 말씀 ›</div>
-    <div class="court-bubble" id="court-bubble"><small>오늘의 한마디</small>$one_liner</div>
-    <div class="court-dialog" id="court-dialog" tabindex="0" role="button" aria-label="대화창: 클릭하거나 Enter를 누르면 다음 대사">
-      <div class="court-face"><img class="face-art" src="$portrait_img" alt=""><canvas id="court-portrait" width="240" height="280" aria-hidden="true"></canvas></div>
-      <div class="court-box">
-        <div class="court-name">諸葛亮 <span>승상 제갈량</span></div>
-        <div class="court-text" id="court-text" aria-live="polite"></div>
-        <span class="court-more" id="court-more" aria-hidden="true">▾</span>
-        <button type="button" class="court-go" id="court-go" hidden>상소 펼쳐 보기 ▼</button>
+    <div class="court-stage">
+      <img class="court-art" id="court-art" src="$court_img" alt="궁궐 대전에서 승상 제갈량이 단상에 서고 신하들이 엎드려 있는 그림">
+      <canvas id="court-canvas" width="1280" height="720" role="img" aria-label="궁궐 대전에서 승상 제갈량이 단상에 서고 신하들이 엎드려 있는 장면"></canvas>
+    </div>
+    <!-- 승상의 오늘의 한마디 (글자는 court.js 가 한 자씩 찍어 줍니다) -->
+    <div class="say" id="say">
+      <div class="say-face"><img class="face-art" src="$portrait_img" alt=""><canvas id="court-portrait" width="240" height="280" aria-hidden="true"></canvas></div>
+      <div class="say-body">
+        <div class="say-name">丞相 諸葛亮 <span>오늘의 한마디</span></div>
+        <p class="say-text" id="say-text" aria-live="polite">$one_liner</p>
+        <small class="say-src" id="say-src"></small>
       </div>
+    </div>
+    <!-- 오늘의 사자성어 -->
+    <aside class="idiom">
+      <div class="idiom-date">$ganji · $date_short 朝會</div>
+      <div class="idiom-hj">$idiom_hanja<span>$idiom_reading</span></div>
+      <p>$idiom_meaning</p>
+      <small>$idiom_source</small>
+    </aside>
+    <!-- 신하들의 대답 (court.js 가 차례로 띄웁니다) -->
+    <div class="replies" id="replies" aria-live="polite"></div>
+    <div class="court-ctl">
+      <button type="button" id="court-replay">↻ 다시 보기</button>
+      <button type="button" id="court-go" class="gold">오늘의 상소 펼치기 ▾</button>
     </div>
   </div>
 </section>
