@@ -237,10 +237,9 @@ body.vertical .notice { margin: 0 0 0 24px; }
 .talk-src { margin-top: auto; padding-top: 4px; font-size: clamp(9.5px, 1.05vw, 11.5px); color: #9aa3c4; }
 .talk-src:empty { display: none; }
 .talk-step { position: absolute; right: 14px; top: 8px; font-size: 11px; color: rgba(185,194,224,.7); }
-.talk-next { position: absolute; right: 16px; bottom: 8px; font-size: 12px; color: #f3d06a; opacity: 0; }
-.talk.done .talk-next { opacity: 1; animation: blink 1s steps(2) infinite; }
-.talk.end .talk-next { animation: none; }
-@keyframes blink { 50% { opacity: .15; } }
+.talk-next { position: absolute; right: 16px; bottom: 8px; font-size: 12px; color: #f3d06a; opacity: 0; letter-spacing: .04em; }
+.talk.done .talk-next { opacity: 1; animation: blink 1.4s ease-in-out infinite; } /* 대사가 다 나오면 "눌러서 계속"이 깜빡임 */
+@keyframes blink { 50% { opacity: .35; } }
 @keyframes rise { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
 .court-ctl { position: absolute; z-index: 3; left: 3%; top: 4%; display: flex; gap: 8px; }
 .court-ctl button { font: 12.5px var(--serif); padding: 6px 12px; border-radius: 999px; cursor: pointer; color: #f3e6c8;
@@ -311,7 +310,7 @@ body.vertical .notice { margin: 0 0 0 24px; }
         <small class="talk-src" id="talk-src"></small>
       </div>
       <span class="talk-step" id="talk-step"></span>
-      <span class="talk-next" aria-hidden="true">▼</span>
+      <span class="talk-next" id="talk-next" aria-hidden="true">눌러서 계속 ▼</span>
     </div>
   </div>
 </section>

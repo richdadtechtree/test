@@ -5,7 +5,7 @@
  *   ① 캔버스: 대각선 위에서 내려다본 대전(쿼터뷰). 단상 위 제갈량, 비스듬히 뻗은 붉은 융단 양옆에 한 줄씩 장수 9명.
  *      위쪽 줄 = 문관(장완·비의·동윤·양의·마속), 아래쪽 줄 = 무장(조운·위연·강유·왕평).
  *   ② 아래 대화창: 말하는 사람의 초상화 + 이름 + 대사. 승상 → 신하들 순서로 차례로 말합니다.
- *      말하는 캐릭터는 머리 위에 '…' 말풍선이 뜨고 통통 튑니다. 대화창을 누르면 다음 대사로 넘어갑니다.
+ *      말하는 캐릭터는 머리 위에 '…' 말풍선이 뜨고 통통 튑니다. 대화창을 눌러야 다음 대사로 넘어갑니다.
  *
  * 핵심 개념 — 쿼터뷰 좌표 iso(x, y, z)
  *   바닥을 바둑판(칸)으로 보고, 칸 번호 (x, y)와 높이 z(픽셀)를 화면 좌표로 바꿉니다.
@@ -585,10 +585,11 @@
 
   /* ── 6. 대화창: 승상의 한마디 → 신하들의 대답을 차례로 ────────
    * 대화창을 누르면(또는 Enter/스페이스) 글자 찍기를 건너뛰거나 다음 대사로 넘어갑니다.
-   * 가만히 두어도 읽을 시간을 준 뒤 자동으로 넘어갑니다. */
+   * 저절로 넘어가지 않습니다 — 누를 때까지 그 대사에 머무릅니다. 마지막 대사에서 누르면 처음부터 다시. */
   var talk = document.getElementById("talk"), tName = document.getElementById("talk-name"),
       tText = document.getElementById("talk-text"), tSrc = document.getElementById("talk-src"),
       tImg = document.getElementById("talk-img"), tCv = document.getElementById("talk-canvas"),
+      tNext = document.getElementById("talk-next"),
       tStep = document.getElementById("talk-step");
   var LINES = [{ who: "제갈량", text: DATA.saying || (tText ? tText.textContent : ""), src: DATA.event || "" }]
     .concat((DATA.replies || []).map(function (r) { return { who: r.who || "신하", text: r.text || "" }; }));
@@ -623,6 +624,7 @@
     if (tSrc) tSrc.textContent = L.src ? "— 근거: " + L.src : "";
     if (tStep) tStep.textContent = (i + 1) + " / " + LINES.length;
     if (talk) talk.classList.remove("done");
+    if (tNext) tNext.textContent = i === LINES.length - 1 ? "끝 · 누르면 처음부터 ↻" : "눌러서 계속 ▼";
     portrait(L.who);
     if (still) { finish(); return; }
     typing = true;
@@ -639,13 +641,12 @@
     var L = LINES[idx];
     tText.textContent = L.text;
     if (talk) talk.classList.add("done");
-    // 다음 대사로: 글 길이에 맞춰 읽을 시간을 줍니다 (최소 2.4초)
-    if (idx < LINES.length - 1) timer = setTimeout(function () { show(idx + 1); }, Math.max(2400, L.text.length * 70));
-    else { timer = setTimeout(function () { speaker = ""; redraw(); if (talk) talk.classList.add("end"); }, 2600); }
+    // 다음 대사로는 누를 때만 넘어갑니다. 오른쪽 아래 안내 글로 알려 줍니다
+    var last = idx === LINES.length - 1;
+    if (tNext) tNext.textContent = last ? "끝 · 누르면 처음부터 ↻" : "눌러서 계속 ▼";
   }
   function next() {
     if (!tText) return;
-    if (talk) talk.classList.remove("end");
     if (pos < LINES[idx].text.length && !still && !talk.classList.contains("done")) finish();
     else if (idx < LINES.length - 1) show(idx + 1);
     else show(0);
@@ -656,6 +657,6 @@
     show(0);
   }
   var replay = document.getElementById("court-replay"), go = document.getElementById("court-go");
-  if (replay) replay.addEventListener("click", function () { if (talk) talk.classList.remove("end"); show(0); });
+  if (replay) replay.addEventListener("click", function () { show(0); });
   if (go) go.addEventListener("click", function () { document.querySelector(".stage").scrollIntoView({ behavior: still ? "auto" : "smooth" }); });
 })();
