@@ -1,31 +1,31 @@
 """
-art.py — 조회 장면의 '그림'을 준비하는 곳
+art.py — 조회 장면의 '그림 파일'을 찾는 곳
 
-우선순위 (위에서부터 먼저 있는 것을 씁니다)
-  1) assets/court.jpg (또는 .png/.webp)   ← 내가 직접 만든 그림 (힉스필드·ChatGPT·미드저니 등)
-     assets/portrait.jpg (또는 .png/.webp) ← 대화창 초상화
-  2) assets/court_auto.jpg, portrait_auto.jpg ← python sangso.py --new-art 로 무료 이미지 생성 서비스에서 새로 뽑은 그림
-  3) assets/court_default.jpg, portrait_default.jpg ← 저장소에 함께 들어 있는 기본 그림 (여러 장 뽑아 골라 둔 것)
-  4) 모두 없으면 → templates/court.js 가 코드로 그린 그림
+조회 장면은 기본적으로 templates/court.js 가 코드로 그립니다 (조조전 풍 쿼터뷰 + 머리 큰 SD 캐릭터).
+그림 파일은 '있으면 대신 쓰는' 선택 사항입니다.
 
-자동 그림은 Pollinations(https://pollinations.ai)라는, 가입 없이 쓰는 무료 이미지 생성 서비스에서 받습니다.
-기본 그림이 이미 있으므로 평소에는 받지 않고(아침 창이 늦어지지 않게), --new-art 를 줬을 때나
-기본 그림까지 지워져 쓸 그림이 하나도 없을 때만 받습니다.
+장면 배경 (위에서부터 먼저 있는 것을 씁니다)
+  1) assets/court.jpg (또는 .png/.webp)  ← 내가 직접 만든 그림
+  2) assets/court_auto.jpg               ← python sangso.py --new-art 로 무료 이미지 서비스에서 뽑은 그림
+  3) 없으면 → 코드로 그린 SD 캐릭터 장면 (기본)
+  ※ 배경 그림을 쓰면 캐릭터들은 안 보이고 대화창만 움직입니다. 되돌리려면 그 파일을 지우세요.
+
+대화창 초상화 (말하는 사람 얼굴)
+  1) assets/portraits/<영문이름>.jpg (또는 .png/.webp) ← 내가 넣은 초상화 (제갈량은 assets/portrait.jpg 도 됨)
+  2) assets/portraits/<영문이름>_default.jpg        ← 저장소에 들어 있는 기본 초상화
+  3) 없으면 → SD 캐릭터 얼굴을 크게 그려 씁니다
+  영문 이름은 아래 CAST_IDS 표를 보세요. 기본 초상화는 Pollinations(https://pollinations.ai)에서
+  아래 프롬프트로 시드를 바꿔 여러 장 뽑아 고르고, 오른쪽 아래 워터마크를 잘라 낸 것입니다.
 
 디버깅 힌트
   - 그림이 안 바뀐다 → logs/sangso.log 에서 '그림' 으로 검색하세요.
-  - 무료 서비스라 가끔 느리거나 막힐 수 있습니다. 실패하면 하루 뒤에 다시 시도하고, 그동안은 코드 그림을 씁니다.
-  - 마음에 안 들면: python sangso.py --new-art  (config.json 의 art_seed 를 바꿔 다시 뽑습니다)
-  - 새로 뽑은 그림이 기본 그림보다 못하면: assets/court_auto.jpg 를 지우면 기본 그림으로 돌아갑니다.
   - 2026년 9월 현재 무료(가입 없는) 사용자에게는 sana 모델만 열려 있어, model=flux 를 적어도
-    1024×576 크기의 sana 그림이 오고 오른쪽 아래에 워터마크가 찍힙니다. 기본 그림은 워터마크를 잘라 낸 것입니다.
+    sana 그림(1024×576)이 오고 워터마크가 찍힙니다.
 """
 
 from __future__ import annotations
 
-import json
 import logging
-import time
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -48,6 +48,30 @@ COURT_PROMPT = (
     "Symmetrical one-point perspective, wide cinematic 16:9 composition, highly detailed, dramatic warm lighting, "
     "painterly brush texture, no text, no watermark, no letters"
 )
+# 대화창 초상화용 주문서: PORTRAIT_BASE 의 {d} 자리에 장수별 설명을 넣습니다
+PORTRAIT_BASE = (
+    "Masterpiece character portrait, bust shot of {d}, Three Kingdoms era Shu Han, "
+    "premium historical strategy game character art, detailed digital painting, soft rim light, "
+    "dark warm brown background, facing the viewer, no text, no watermark"
+)
+# 고른 시드: 장완 12, 비의 12, 동윤 13, 양의 13, 강유 1, 위연 2, 마속 1, 조운 2, 왕평 2, 제갈량(PORTRAIT_PROMPT) 1
+# ('official hat' 이라고 쓰면 현대식 모자가 나와서, 문관은 상투 + 작은 관으로 풀어 썼습니다)
+GENERALS = {
+    "jiang_wan": "Jiang Wan, calm steady middle-aged ancient Chinese civil minister, gentle reliable face, short neat black beard, hair in a topknot under a small black gauze Han dynasty crown, no brim, deep green hanfu robe with cross collar",
+    "fei_yi": "Fei Yi, witty cheerful ancient Chinese civil minister in his thirties, playful smile, thin mustache, hair in a topknot under a small black gauze Han dynasty crown, no brim, sky blue hanfu robe with cross collar",
+    "dong_yun": "Dong Yun, strict stern elderly ancient Chinese court official, frowning serious face, long grey beard, grey hair in a topknot under a small black gauze Han dynasty crown, no brim, dark purple hanfu robe with cross collar",
+    "jiang_wei": "Jiang Wei, young passionate Chinese general in his twenties, determined bright eyes, clean shaven, silver and blue lamellar armor, red headband",
+    "wei_yan": "Wei Yan, fierce hot-tempered Chinese general, bold grin, thick black full beard, tanned skin, dark red lamellar armor with bronze plates",
+    "yang_yi": "Yang Yi, fussy sharp-eyed thin middle-aged ancient Chinese court secretary man, narrow suspicious eyes, thin pointed goatee beard, hair in a topknot under a small black gauze Han dynasty crown, no brim, grey brown hanfu robe with cross collar",
+    "ma_su": "Ma Su, confident young Chinese strategist scholar, proud smirk, clean shaven, black scholar headscarf, teal Han dynasty robe, holding a scroll",
+    "zhao_yun": "Zhao Yun, loyal quiet handsome Chinese general, calm resolute face, white silver armor, white cape, silver helmet with white plume",
+    "wang_ping": "Wang Ping, practical weathered veteran Chinese soldier general, rugged face, short stubble beard, brown leather and iron armor, simple helmet",
+}
+# 한글 이름 → 초상화 파일 이름 (윈도우에서도 탈 없도록 파일 이름은 영문)
+CAST_IDS = {
+    "제갈량": "zhuge_liang", "장완": "jiang_wan", "비의": "fei_yi", "동윤": "dong_yun", "양의": "yang_yi",
+    "마속": "ma_su", "강유": "jiang_wei", "조운": "zhao_yun", "위연": "wei_yan", "왕평": "wang_ping",
+}
 PORTRAIT_PROMPT = (
     "Masterpiece character portrait, bust shot of Zhuge Liang the legendary Three Kingdoms strategist, "
     "wise gentle face, calm intelligent eyes, long thin black beard and mustache, black silk guanjin headscarf, "
@@ -72,6 +96,13 @@ def find(assets: Path, name: str) -> Path | None:
     return None
 
 
+def portrait(assets: Path, who: str) -> Path | None:
+    """대화창 초상화. 제갈량은 예전 위치(assets/portrait.*)도 먼저 찾아 봅니다."""
+    if who == "제갈량" and (f := find(assets, "portrait")):
+        return f
+    return find(assets / "portraits", CAST_IDS[who]) if who in CAST_IDS else None
+
+
 def _download(prompt: str, w: int, h: int, seed: int, dest: Path) -> bool:
     url = URL.format(prompt=urllib.parse.quote(prompt), w=w, h=h, seed=seed)
     req = urllib.request.Request(url, headers={"User-Agent": "zhuge-sangso/1.0"})
@@ -92,27 +123,13 @@ def _download(prompt: str, w: int, h: int, seed: int, dest: Path) -> bool:
 
 
 def ensure(base: Path, cfg: dict, force: bool = False) -> None:
-    """쓸 그림이 하나도 없거나 force(--new-art)일 때만 자동 그림을 받습니다. 실패해도 프로그램은 계속 진행합니다.
-    기본 그림(court_default.jpg)이 있으면 find() 가 그것을 돌려주므로 평소에는 아무것도 받지 않습니다."""
-    if not cfg.get("auto_art", True):
+    """--new-art 일 때만 배경 그림(과 제갈량 초상화)을 새로 받습니다. 평소엔 아무것도 받지 않습니다.
+    (기본 장면은 코드로 그린 SD 캐릭터 장면이라 인터넷이 필요 없습니다.) 실패해도 프로그램은 계속 진행합니다."""
+    if not force:
         return
     assets = base / "assets"
     assets.mkdir(exist_ok=True)
-    stamp = assets / ".art_attempt.json"
-    try:
-        last = json.loads(stamp.read_text(encoding="utf-8")).get("t", 0)
-    except (OSError, ValueError):
-        last = 0
-    missing = [n for n in ("court", "portrait") if force or not find(assets, n)]
-    if not missing:
-        return
-    if not force and time.time() - last < 24 * 3600:
-        return  # 실패한 지 하루가 안 됐으면 기다립니다 (매일 아침을 느리게 만들지 않도록)
-    stamp.write_text(json.dumps({"t": time.time()}), encoding="utf-8")
-
     seed = int(cfg.get("art_seed", 1234))
-    log.info("그림을 받아 옵니다 (처음 한 번, 1~3분)…")
-    if "court" in missing:
-        _download(COURT_PROMPT, 1600, 900, seed, assets / "court_auto.jpg")
-    if "portrait" in missing:
-        _download(PORTRAIT_PROMPT, 512, 600, seed + 7, assets / "portrait_auto.jpg")
+    log.info("그림을 새로 받아 옵니다 (1~3분)…")
+    _download(COURT_PROMPT, 1600, 900, seed, assets / "court_auto.jpg")
+    _download(PORTRAIT_PROMPT, 512, 600, seed + 7, assets / "portrait_auto.jpg")

@@ -24,12 +24,6 @@
   "max_context_chars": 60000,
   "_max_context_chars": "대화 기록을 최대 몇 글자까지 넣을지 (너무 크면 느려지고 비용이 늘어납니다)",
 
-  "auto_art": true,
-  "_auto_art": "true면 조회 장면 그림이 하나도 없을 때 무료 이미지 서비스(Pollinations, 가입 불필요)에서 받아 둡니다. 쓰는 순서: assets/court.jpg(직접 넣은 그림) → court_auto.jpg(--new-art 로 뽑은 그림) → court_default.jpg(기본 그림) → 코드 그림.",
   "art_seed": 1234,
-  "_art_seed": "그림 번호. 바꾸면 다른 그림이 나옵니다. python sangso.py --new-art 로 자동으로 바꿔 새로 뽑을 수 있습니다.",
-  "art_bubble": [50, 50],
-  "_art_bubble": "그림을 쓸 때 승상 말풍선의 꼬리가 가리킬 곳 [가로 %, 세로 %] (화면 왼쪽 위가 0,0). 그림 속 제갈량의 머리에 맞추세요. 기본값은 court_default.jpg 기준.",
-  "art_replies": [[21, 66], [79, 66], [27, 86], [73, 86]],
-  "_art_replies": "그림을 쓸 때 신하 대답 말풍선 자리 [가로 %, 세로 %] 네 곳 (말풍선 꼬리 끝 위치). 그림 속 인물·얼굴을 가리지 않게 조절하세요."
+  "_art_seed": "조회 장면은 코드로 그린 SD 캐릭터 장면이 기본입니다. python sangso.py --new-art 를 실행하면 이 번호를 바꿔 무료 이미지 서비스(Pollinations)에서 배경 그림을 새로 뽑아 대신 씁니다(캐릭터는 안 보임). 되돌리려면 assets/court_auto.jpg 를 지우세요."
 }

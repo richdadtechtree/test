@@ -49,8 +49,7 @@ def _body(part: dict) -> str:
 
 
 def render(data: dict, day: date, out_dir: Path, template: Path, engine_label: str,
-           notice: str = "", filename: str | None = None, bubble: tuple = (50, 50),
-           reply_slots: list | None = None) -> Path:
+           notice: str = "", filename: str | None = None) -> Path:
     """filename을 주면(견본·임시본) 그 이름으로 저장하고, 지난 상소의 링크는 건드리지 않습니다."""
     c1, c2 = count_chars(data.get("part1")), count_chars(data.get("part2"))
     tasks, motto = data.get("today_task") or {}, data.get("motto") or {}
@@ -72,18 +71,18 @@ def render(data: dict, day: date, out_dir: Path, template: Path, engine_label: s
         {"who": "비의", "text": "주공께서 들으시면 분명 웃으실 것이옵니다."},
         {"who": "강유", "text": "소장, 오늘도 한 걸음 나아가겠나이다!"},
     ]
-    court = {"saying": one_liner, "idiom": idiom, "replies": replies, "event": c.get("event", ""),
-             # 그림 파일을 쓸 때만 쓰는 자리(화면 %): 말풍선 꼬리가 가리킬 곳, 신하 대답 말풍선 자리 (court.js 참고)
-             "art_tip": list(bubble)[:2], "art_slots": reply_slots or []}
+    court = {"saying": one_liner, "idiom": idiom, "replies": replies, "event": c.get("event", "")}
+
+    # 그림 파일이 있으면 코드 그림 대신 사용합니다 (art.py 참고). ?v=… 는 그림을 바꿨을 때 브라우저가 옛 그림을 쓰지 않게 합니다
+    def url(f: Path | None) -> str:
+        return f"../{f.relative_to(out_dir.parent).as_posix()}?v={int(f.stat().st_mtime)}" if f else ""
+    assets = out_dir.parent / "assets"
+    court_img, portrait_img = url(art.find(assets, "court")), url(art.portrait(assets, "제갈량"))
+    # 대화창 초상화: 이름 → 그림 주소. 없는 사람은 court.js 가 SD 캐릭터 얼굴로 대신 그립니다
+    court["portraits"] = {n: u for n in art.CAST_IDS if (u := url(art.portrait(assets, n)))}
     # </script> 같은 문자열이 글에 섞여도 스크립트가 끊기지 않도록 "</" 를 바꿔 둡니다
     court_json = json.dumps(court, ensure_ascii=False).replace("</", "<\\/")
     court_script = (template.parent / "court.js").read_text(encoding="utf-8")
-
-    # 그림 파일이 있으면 코드 그림 대신 사용합니다 (art.py 참고). ?v=… 는 그림을 바꿨을 때 브라우저가 옛 그림을 쓰지 않게 합니다
-    def art_url(name: str) -> str:
-        f = art.find(out_dir.parent / "assets", name)
-        return f"../assets/{f.name}?v={int(f.stat().st_mtime)}" if f else ""
-    court_img, portrait_img = art_url("court"), art_url("portrait")
     page = Template(template.read_text(encoding="utf-8")).safe_substitute(
         date_iso=iso,
         date_short=f"{day:%m월 %d일}",

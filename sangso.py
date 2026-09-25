@@ -9,7 +9,7 @@
   python sangso.py --sample     Claude를 부르지 않고 견본 상소를 띄웁니다 (디자인 확인용)
   python sangso.py --no-open    창을 띄우지 않고 파일만 만듭니다
   python sangso.py --redraw     Claude를 부르지 않고, 지난 상소들을 지금 디자인으로 다시 그립니다
-  python sangso.py --new-art    조회 장면 그림을 새로 뽑고, 지난 상소에도 적용합니다
+  python sangso.py --new-art    조회 장면 배경을 그림(무료 이미지 서비스)으로 새로 뽑고, 지난 상소에도 적용합니다
 
 문제가 생기면 logs/sangso.log 를 먼저 열어 보세요. 무엇이 어디서 실패했는지 적혀 있습니다.
 """
@@ -53,9 +53,8 @@ CFG: dict = {}
 
 
 def draw(*args, **kwargs) -> Path:
-    """render.render 에 설정값(말풍선 꼬리·신하 대답 위치)을 함께 넘깁니다."""
-    return render.render(*args, bubble=tuple(CFG.get("art_bubble", [50, 50])),
-                         reply_slots=CFG.get("art_replies"), **kwargs)
+    """render.render 를 부르는 짧은 이름."""
+    return render.render(*args, **kwargs)
 
 
 def load_config() -> dict:
@@ -115,7 +114,7 @@ def main() -> int:
     ap.add_argument("--sample", action="store_true", help="견본 상소를 띄운다")
     ap.add_argument("--no-open", action="store_true", help="창을 띄우지 않는다")
     ap.add_argument("--redraw", action="store_true", help="지난 상소들을 새 디자인으로 다시 그린다")
-    ap.add_argument("--new-art", action="store_true", help="조회 장면 그림을 새로 뽑는다 (art_seed를 바꿔서)")
+    ap.add_argument("--new-art", action="store_true", help="조회 장면 배경을 그림으로 새로 뽑는다 (art_seed를 바꿔서). 기본은 코드로 그린 SD 캐릭터 장면")
     args = ap.parse_args()
 
     setup_logging()

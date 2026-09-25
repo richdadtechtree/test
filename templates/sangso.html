@@ -194,7 +194,7 @@ body.vertical .notice { margin: 0 0 0 24px; }
 .court::before, .court::after { content: ""; position: absolute; width: 38px; height: 38px; border: 2px solid #c9a24a; z-index: 3; pointer-events: none; }
 .court::before { top: 12px; left: 12px; border-right: 0; border-bottom: 0; }
 .court::after { bottom: 12px; right: 12px; border-left: 0; border-top: 0; }
-.court-view { position: relative; aspect-ratio: 1280 / 720; overflow: hidden; border-radius: 3px; outline: 1px solid rgba(201,162,74,.35); }
+.court-view { position: relative; aspect-ratio: 960 / 540; overflow: hidden; border-radius: 3px; outline: 1px solid rgba(201,162,74,.35); }
 .court canvas#court-canvas { display: block; width: 100%; height: 100%; }
 /* 그림 파일을 쓸 때: 그림 + 영화 같은 명암(가장자리·아래를 어둡게 해 글자가 잘 보이게) */
 .court-art, .face-art { display: none; width: 100%; height: 100%; object-fit: cover; }
@@ -208,65 +208,56 @@ body.vertical .notice { margin: 0 0 0 24px; }
 @media (prefers-reduced-motion: reduce) { .court.has-art .court-art { animation: none; } }
 .court-stage { position: absolute; inset: 0; overflow: hidden; }
 .court-stage > * { position: absolute; inset: 0; }
-/* 승상의 큰 말풍선 */
-.say { position: absolute; z-index: 3; top: 3.5%; left: 4%; width: 54%; display: flex; gap: 12px; align-items: stretch;
-  padding: 10px 14px 10px 10px; border-radius: 10px; color: #2a1d12;
-  background: linear-gradient(180deg, #fffaf0, #f1e5c9); border: 2px solid #3a2a1a;
-  box-shadow: 0 10px 28px rgba(0,0,0,.5), inset 0 0 0 3px #fffaf0, inset 0 0 0 4px rgba(201,162,74,.7);
-  animation: rise .6s .2s both; }
-/* 말풍선 꼬리: 그림 파일을 쓸 땐 court.js 가 --tail-x(꼬리 위치)·--tail-len(길이)을 정해 그림 속 제갈량을 가리키게 합니다 */
-.say::after { content: ""; position: absolute; left: var(--tail-x, 83%); bottom: calc(1px - var(--tail-len, 16px)); width: 22px; height: var(--tail-len, 16px);
-  margin-left: -11px; background: #3a2a1a; clip-path: polygon(0 0, 100% 0, 50% 100%); }
-.say::before { content: ""; position: absolute; left: var(--tail-x, 83%); bottom: calc(6px - var(--tail-len, 16px)); width: 16px; height: calc(var(--tail-len, 16px) - 4px);
-  margin-left: -8px; background: #f1e5c9; clip-path: polygon(0 0, 100% 0, 50% 100%); z-index: 1; }
-.say-face { flex: none; width: clamp(48px, 12%, 84px); aspect-ratio: 240 / 280; border-radius: 6px; overflow: hidden;
-  border: 2px solid #3a2a1a; box-shadow: inset 0 0 0 1px rgba(201,162,74,.6); background: #2a1a10; }
-.say-face canvas, .say-face img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
-.say-face .face-art[src=""] { display: none; } /* 초상화 파일이 없으면 깨진 그림 대신 코드 초상화(canvas)를 보입니다 */
-.say-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.say-name { font-family: var(--hanja); font-weight: 700; color: #a3281c; font-size: clamp(11px, 1.35vw, 14px); letter-spacing: .1em; }
-.say-name span { font-family: var(--serif); font-weight: 400; color: #7a6a52; letter-spacing: .02em; margin-left: 6px; font-size: .9em; }
-.say-text { margin: 2px 0 0; font-size: clamp(11.5px, 1.5vw, 15.5px); line-height: 1.55; word-break: keep-all; min-height: 3.2em; text-indent: 0; }
-.say-src { margin-top: auto; padding-top: 4px; font-size: clamp(9px, 1.05vw, 11.5px); color: #8a7658; }
-.say-src:empty { display: none; }
 /* 오늘의 사자성어 카드 */
-.idiom { position: absolute; z-index: 3; top: 3.5%; right: 3%; width: 27%; padding: 12px 16px 12px; border-radius: 8px; color: #f3e6c8;
+/* 장면 속 인물(특히 오른쪽 끝 장수의 말풍선)을 가리지 않도록 낮고 넓게 */
+.idiom { position: absolute; z-index: 3; top: 3%; right: 3%; width: 30%; padding: 8px 14px 9px; border-radius: 8px; color: #f3e6c8;
   background: linear-gradient(180deg, rgba(40,20,12,.92), rgba(20,11,7,.94)); border: 1px solid #c9a24a;
   box-shadow: 0 10px 26px rgba(0,0,0,.5), inset 0 0 0 4px rgba(20,11,7,.9), inset 0 0 0 5px rgba(201,162,74,.35); animation: rise .6s .5s both; }
 .idiom-date { font-size: clamp(9px, 1vw, 11px); color: rgba(240,210,140,.7); letter-spacing: .08em; }
-.idiom-hj { font-family: var(--hanja); font-weight: 900; font-size: clamp(18px, 2.9vw, 30px); color: #f0cf78; letter-spacing: .12em; line-height: 1.3; margin: 2px 0 4px; }
-.idiom-hj span { display: block; font-family: var(--serif); font-weight: 400; font-size: .45em; color: rgba(243,230,200,.8); letter-spacing: .3em; }
-.idiom p { margin: 0; font-size: clamp(10.5px, 1.3vw, 13.5px); line-height: 1.6; text-indent: 0; word-break: keep-all; }
-.idiom small { display: block; margin-top: 4px; font-size: clamp(9px, 1vw, 11px); color: rgba(240,210,140,.6); }
-/* 신하들의 대답 */
-.replies { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
-.reply { position: absolute; transform: translate(-50%, -100%); width: max-content; max-width: min(19%, 210px);
-  padding: 7px 11px 8px; border-radius: 10px; background: #fffaf0; color: #2a1d12; border: 1.5px solid #3a2a1a;
-  font-size: clamp(10px, 1.2vw, 13px); line-height: 1.45; word-break: keep-all; box-shadow: 0 6px 16px rgba(0,0,0,.45);
-  opacity: 0; animation: pop .45s cubic-bezier(.2,1.4,.4,1) forwards; }
-.reply::after { content: ""; position: absolute; left: 50%; bottom: -9px; margin-left: -7px; width: 14px; height: 10px; background: #3a2a1a;
-  clip-path: polygon(0 0, 100% 0, 50% 100%); }
-.reply b { display: inline-block; margin: 0 6px 2px 0; padding: 1px 7px; border-radius: 3px; background: #8d2019; color: #fff3e0;
-  font-size: .82em; font-weight: 700; letter-spacing: .06em; }
-@keyframes pop { from { opacity: 0; transform: translate(-50%, -80%) scale(.7); } to { opacity: 1; transform: translate(-50%, -100%) scale(1); } }
+.idiom-hj { font-family: var(--hanja); font-weight: 900; font-size: clamp(17px, 2.5vw, 26px); color: #f0cf78; letter-spacing: .1em; line-height: 1.25; margin: 1px 0 3px; }
+.idiom-hj span { display: inline-block; margin-left: 8px; font-family: var(--serif); font-weight: 400; font-size: .48em; color: rgba(243,230,200,.8); letter-spacing: .3em; }
+.idiom p { margin: 0; font-size: clamp(10px, 1.2vw, 12.5px); line-height: 1.5; text-indent: 0; word-break: keep-all; }
+.idiom small { display: block; margin-top: 2px; font-size: clamp(9px, 1vw, 11px); color: rgba(240,210,140,.6); }
+/* 대화창 (조조전 풍): 짙은 남색 판 + 금테, 왼쪽에 초상화가 판 위로 솟아 있습니다 */
+.talk { position: absolute; z-index: 3; left: 3%; right: 3%; bottom: 3.5%; min-height: 24%; display: flex; gap: 14px; align-items: stretch;
+  padding: 12px 18px 12px calc(clamp(64px, 15%, 140px) + 26px); border-radius: 8px; cursor: pointer; color: #f6ecd6;
+  background: linear-gradient(180deg, rgba(28,36,70,.95), rgba(14,18,40,.96)); border: 2px solid #c9a24a;
+  box-shadow: 0 10px 28px rgba(0,0,0,.55), inset 0 0 0 3px rgba(14,18,40,.9), inset 0 0 0 4px rgba(201,162,74,.45);
+  animation: rise .5s .2s both; user-select: none; }
+.talk:focus-visible { outline: 3px solid #f3d98a; outline-offset: 3px; }
+.talk-face { position: absolute; left: 14px; bottom: 10px; width: clamp(64px, 15%, 140px); aspect-ratio: 240 / 280; border-radius: 4px; overflow: hidden;
+  border: 2px solid #c9a24a; background: #2a1a10; box-shadow: 0 6px 16px rgba(0,0,0,.5); }
+.talk-face img, .talk-face canvas { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; }
+.talk-face [hidden] { display: none; }
+.talk-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.talk-name { font-weight: 700; color: #f3d06a; font-size: clamp(13px, 1.6vw, 17px); letter-spacing: .06em; }
+.talk-name span { font-family: var(--hanja); font-weight: 500; color: rgba(243,208,106,.7); margin-left: 6px; font-size: .85em; }
+.talk-name em { font-style: normal; font-weight: 400; color: #b9c2e0; margin-left: 10px; font-size: .78em; letter-spacing: .02em; }
+.talk-text { margin: 4px 0 0; font-size: clamp(12.5px, 1.65vw, 17px); line-height: 1.6; word-break: keep-all; text-indent: 0; min-height: 3.2em; }
+.talk-src { margin-top: auto; padding-top: 4px; font-size: clamp(9.5px, 1.05vw, 11.5px); color: #9aa3c4; }
+.talk-src:empty { display: none; }
+.talk-step { position: absolute; right: 14px; top: 8px; font-size: 11px; color: rgba(185,194,224,.7); }
+.talk-next { position: absolute; right: 16px; bottom: 8px; font-size: 12px; color: #f3d06a; opacity: 0; }
+.talk.done .talk-next { opacity: 1; animation: blink 1s steps(2) infinite; }
+.talk.end .talk-next { animation: none; }
+@keyframes blink { 50% { opacity: .15; } }
 @keyframes rise { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
-.court-ctl { position: absolute; z-index: 3; right: 3%; bottom: 4%; display: flex; gap: 8px; }
-.court-ctl button { font: 13px var(--serif); padding: 7px 14px; border-radius: 999px; cursor: pointer; color: #f3e6c8;
+.court-ctl { position: absolute; z-index: 3; left: 3%; top: 4%; display: flex; gap: 8px; }
+.court-ctl button { font: 12.5px var(--serif); padding: 6px 12px; border-radius: 999px; cursor: pointer; color: #f3e6c8;
   background: rgba(20,11,7,.8); border: 1px solid rgba(201,162,74,.7); box-shadow: 0 4px 12px rgba(0,0,0,.4); }
 .court-ctl button.gold { color: #1d120a; font-weight: 700; background: linear-gradient(180deg, #f3d98a, #c9a24a); border-color: #7a5a1e; }
 .court-ctl button:hover { filter: brightness(1.1); }
-@media (prefers-reduced-motion: reduce) { .say, .idiom, .reply { animation: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .talk, .idiom { animation: none; opacity: 1; } .talk.done .talk-next { animation: none; } }
 @media (max-width: 640px) {
   .court { margin: 0 -8px 26px; padding: 4px; }
   .court::before, .court::after { display: none; }
-  /* 좁은 화면: 그림 아래로 말풍선·카드·대답을 차례로 쌓습니다 */
+  /* 좁은 화면: 장면 아래로 대화창·카드·버튼을 차례로 쌓습니다 */
   .court-view { aspect-ratio: auto; overflow: visible; display: flex; flex-direction: column; gap: 8px; }
-  .court-stage { position: relative; aspect-ratio: 1280 / 720; }
-  .say, .idiom, .replies, .court-ctl { position: static; width: auto; }
-  .say::after, .say::before { display: none; }
-  .replies { display: flex; flex-direction: column; gap: 6px; }
-  .reply { position: static; transform: none; max-width: 100%; animation-name: rise; }
-  .reply::after { display: none; }
+  .court-stage { position: relative; aspect-ratio: 960 / 540; }
+  .idiom, .court-ctl { position: static; width: auto; }
+  .talk { position: relative; left: auto; right: auto; bottom: auto; min-height: 0; padding-left: 96px; }
+  .talk-face { width: 72px; left: 10px; top: 10px; bottom: auto; }
+  .talk { order: 1; } .idiom { order: 2; } .court-ctl { order: 3; }
   .court-ctl { justify-content: flex-end; }
 }
 
@@ -292,21 +283,12 @@ body.vertical .notice { margin: 0 0 0 24px; }
     <feDisplacementMap in="SourceGraphic" scale="4"/></filter>
 </svg>
 
-<!-- 조회 장면: 승상 제갈량과 엎드린 신하들 (그림은 templates/court.js 가 그립니다) -->
+<!-- 조회 장면: 단상 위 승상 제갈량과 좌우로 늘어선 장수들 (그림은 templates/court.js 가 그립니다) -->
 <section class="court $court_mode" aria-label="승상부 조회 장면">
   <div class="court-view">
     <div class="court-stage">
-      <img class="court-art" id="court-art" src="$court_img" alt="궁궐 대전에서 승상 제갈량이 단상에 서고 신하들이 엎드려 있는 그림">
-      <canvas id="court-canvas" width="1280" height="720" role="img" aria-label="궁궐 대전에서 승상 제갈량이 단상에 서고 신하들이 엎드려 있는 장면"></canvas>
-    </div>
-    <!-- 승상의 오늘의 한마디 (글자는 court.js 가 한 자씩 찍어 줍니다) -->
-    <div class="say" id="say">
-      <div class="say-face"><img class="face-art" src="$portrait_img" alt=""><canvas id="court-portrait" width="240" height="280" aria-hidden="true"></canvas></div>
-      <div class="say-body">
-        <div class="say-name">丞相 諸葛亮 <span>오늘의 한마디</span></div>
-        <p class="say-text" id="say-text" aria-live="polite">$one_liner</p>
-        <small class="say-src" id="say-src"></small>
-      </div>
+      <img class="court-art" id="court-art" src="$court_img" alt="궁궐 대전에서 승상 제갈량이 단상에 선 그림">
+      <canvas id="court-canvas" width="960" height="540" role="img" aria-label="대전 단상 위의 승상 제갈량과, 붉은 융단 양옆에 늘어선 장수 아홉 명(왼쪽 문관 장완·비의·동윤·양의·마속, 오른쪽 무장 강유·조운·위연·왕평)"></canvas>
     </div>
     <!-- 오늘의 사자성어 -->
     <aside class="idiom">
@@ -315,11 +297,21 @@ body.vertical .notice { margin: 0 0 0 24px; }
       <p>$idiom_meaning</p>
       <small>$idiom_source</small>
     </aside>
-    <!-- 신하들의 대답 (court.js 가 차례로 띄웁니다) -->
-    <div class="replies" id="replies" aria-live="polite"></div>
     <div class="court-ctl">
       <button type="button" id="court-replay">↻ 다시 보기</button>
       <button type="button" id="court-go" class="gold">오늘의 상소 펼치기 ▾</button>
+    </div>
+    <!-- 대화창 (조조전처럼 아래에 초상화 + 이름 + 대사). court.js 가 승상 → 신하 순서로 바꿔 가며 보여 줍니다.
+         누르면 다음 대사로 넘어갑니다. -->
+    <div class="talk" id="talk" role="button" tabindex="0" aria-label="대화창 — 누르면 다음 대사">
+      <div class="talk-face"><img id="talk-img" src="$portrait_img" alt="" hidden><canvas id="talk-canvas" width="240" height="280" aria-hidden="true"></canvas></div>
+      <div class="talk-body">
+        <div class="talk-name" id="talk-name">제갈량<span>諸葛亮</span><em>오늘의 한마디</em></div>
+        <p class="talk-text" id="talk-text" aria-live="polite">$one_liner</p>
+        <small class="talk-src" id="talk-src"></small>
+      </div>
+      <span class="talk-step" id="talk-step"></span>
+      <span class="talk-next" aria-hidden="true">▼</span>
     </div>
   </div>
 </section>

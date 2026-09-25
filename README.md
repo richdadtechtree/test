@@ -2,20 +2,24 @@
 
 매일 오전 7시, 승상 제갈량이 **주공(나)께 올리는 상소문** 창이 뜹니다.
 
-창을 열면 상소문과는 별개로 먼저 **승상부 조회(朝會) 장면**이 나옵니다.
-- **승상의 오늘의 한마디**: 최근 클로드 코드(와 claude.ai) 대화에서 **실제로 있었던 일 하나**를 짚어 조언합니다. 말풍선 아래에 근거가 된 기록이 작게 표시됩니다.
+창을 열면 상소문과는 별개로 먼저 **승상부 조회(朝會) 장면**이 나옵니다. 조조전처럼 대전을 비스듬히 내려다본 화면(쿼터뷰)에, 머리 큰 SD 캐릭터들이 서 있습니다.
+- 단상 위에 **승상 제갈량**, 붉은 융단 왼쪽에 문관(장완·비의·동윤·양의·마속), 오른쪽에 무장(강유·조운·위연·왕평).
+  캐릭터마다 성격이 보이게 그렸습니다 — 비의는 웃는 눈, 동윤은 찌푸린 눈썹과 흰 수염, 양의는 가늘게 뜬 눈, 마속은 병법서를 든 채 으쓱, 위연은 수염 덥수룩하게 이를 드러내고, 조운은 흰 갑옷과 망토, 강유는 붉은 머리띠에 반짝이는 눈.
+- 아래 **대화창**에 말하는 사람의 초상화·이름과 대사가 차례로 나옵니다. 말하는 캐릭터는 머리 위에 '…' 말풍선이 뜨고 통통 튑니다.
+  - **승상의 오늘의 한마디**: 최근 클로드 코드(와 claude.ai) 대화에서 **실제로 있었던 일 하나**를 짚어 조언합니다. 대사 아래에 근거가 된 기록이 작게 표시됩니다.
+  - **신하들의 대답**: 위 아홉 명 가운데 3~4명이 성격대로 한마디씩 합니다(위연은 투덜, 양의는 트집, 강유는 의욕 충만…).
+  - 대화창을 누르면(또는 Enter) 다음 대사로 넘어갑니다. 가만히 두어도 읽을 시간을 준 뒤 넘어갑니다.
 - **오늘의 사자성어 카드**: 한마디와 어울리는 실존 사자성어와 풀이.
-- **신하들의 대답**: 장완·비의·동윤·강유·위연·양의·마속·조운·왕평 가운데 3~4명이 성격대로 한마디씩 합니다(위연은 투덜, 양의는 트집, 강유는 의욕 충만…).
-- **↻ 다시 보기**로 다시 볼 수 있고, **오늘의 상소 펼치기**를 누르면 아래 두루마리로 내려갑니다.
-### 장면 그림은 어디서 오나요? (위에서부터 먼저 있는 것을 씁니다)
+- **↻ 다시 보기**로 처음부터 다시 볼 수 있고, **오늘의 상소 펼치기**를 누르면 아래 두루마리로 내려갑니다.
 
-1. **내가 넣은 그림** — `assets/court.jpg`(장면)와 `assets/portrait.jpg`(초상화, .png도 됨)를 넣으면 그걸 씁니다. 이 파일들은 저작권이 있는 그림일 수 있어 git에 올라가지 않게 해 두었습니다. 힉스필드·ChatGPT·미드저니 등 어디서 만든 그림이든 됩니다. 그림 주문문(프롬프트)은 `sangso_lib/art.py`의 `COURT_PROMPT`, `PORTRAIT_PROMPT`를 그대로 복사해 쓰면 됩니다. (장면은 16:9 가로 그림, 가운데 제갈량이 오게)
-2. **새로 뽑은 그림** — `python sangso.py --new-art` 를 실행하면 **가입 없이 쓰는 무료 이미지 생성 서비스 [Pollinations](https://pollinations.ai)**에서 다른 그림을 뽑아 `assets/court_auto.jpg`에 저장하고 지난 상소에도 적용합니다(1~3분).
-   - 새 그림이 기본 그림보다 못하면 `assets/court_auto.jpg`(와 `portrait_auto.jpg`)를 지우면 기본 그림으로 돌아갑니다.
-   - 참고: 2026년 9월 현재 무료 사용자에게는 `sana` 모델만 열려 있어 품질이 들쭉날쭉하고, 오른쪽 아래에 워터마크가 찍힙니다.
-3. **기본 그림** — 저장소에 들어 있는 `assets/court_default.jpg`(장면), `assets/portrait_default.jpg`(초상화). Pollinations에서 `COURT_PROMPT`·`PORTRAIT_PROMPT`로 시드(seed)를 바꿔 수십 장 뽑아 가장 나은 것을 고르고 워터마크를 잘라 낸 그림입니다. 그래서 처음 설치해도 바로 그림이 뜹니다.
-   - 승상 말풍선의 꼬리는 `config.json`의 `art_bubble`(가로 %, 세로 %) 쪽을 가리킵니다. 신하 대답 자리는 `art_replies`. 내 그림을 넣었다면 그림 속 제갈량 머리·빈 자리에 맞게 바꾸세요.
-4. **코드 그림** — 위 그림이 하나도 없거나 그림 파일이 깨졌으면 `templates/court.js`가 그린 그림으로 뜹니다(인터넷 불필요).
+### 그림은 어디서 오나요?
+
+- **장면**: 기본은 `templates/court.js`가 코드로 그린 SD 캐릭터 장면입니다(인터넷 불필요). 캐릭터의 옷 색·모자·수염·표정·자리는 그 파일 위쪽 `CAST` 표에서 바꿉니다.
+  - 배경을 그림으로 바꾸고 싶으면 `assets/court.jpg`(직접 만든 그림)를 넣거나, `python sangso.py --new-art`로 무료 이미지 서비스 [Pollinations](https://pollinations.ai)에서 뽑은 `assets/court_auto.jpg`를 씁니다. 이때는 SD 캐릭터 대신 그 그림이 보이고 대화창만 움직입니다. 되돌리려면 그 파일을 지우세요.
+- **대화창 초상화**: `assets/portraits/<영문이름>_default.jpg`(저장소에 들어 있음). Pollinations에서 장수마다 시드를 바꿔 여러 장 뽑아 가장 나은 것을 고르고 워터마크를 잘라 낸 그림입니다. 프롬프트는 `sangso_lib/art.py`의 `PORTRAIT_BASE`·`GENERALS`에 있습니다.
+  - 내 초상화를 쓰려면 `assets/portraits/<영문이름>.jpg`(.png도 됨)를 넣으세요(git에는 올라가지 않음). 영문 이름은 `art.py`의 `CAST_IDS` 표 참고 (예: 위연 → `wei_yan.jpg`). 제갈량은 예전처럼 `assets/portrait.jpg`도 됩니다.
+  - 초상화 파일이 없으면 SD 캐릭터 얼굴을 크게 그려 대신 씁니다.
+  - 참고: 2026년 9월 현재 Pollinations 무료 사용자에게는 `sana` 모델만 열려 있어 품질이 들쭉날쭉하고, 오른쪽 아래에 워터마크가 찍힙니다.
 
 - **제1장 · 클로드 코드 운용책** — 초보인 내가 클로드 코드를 더 잘 쓰는 법 (공백 제외 2,000자 이상)
 - **제2장 · 대업과 삶의 방향** — 내 비즈니스와 삶에 대한 조언 (공백 제외 3,000자 이상)
@@ -94,7 +98,7 @@ python sangso.py --force      # 오늘 상소를 새로 쓴다
 python sangso.py --sample     # Claude 호출 없이 견본으로 디자인만 확인
 python sangso.py --no-open    # 창은 띄우지 않고 파일만 만든다
 python sangso.py --redraw     # 지난 상소들을 지금 디자인으로 다시 그린다
-python sangso.py --new-art    # 조회 장면 그림을 새로 뽑는다
+python sangso.py --new-art    # 조회 장면 배경을 그림으로 새로 뽑는다 (기본은 SD 캐릭터 장면)
 ```
 
 만들어진 상소는 `output/날짜.html`에, 원문 데이터는 `archive/날짜.json`에 쌓입니다.
@@ -113,7 +117,7 @@ sangso_lib/
   engine.py                ← Claude 호출 (claude -p 또는 API) + 분량 검사 + 모자라면 다시 요청
   render.py                ← JSON → 두루마리 HTML, 창 띄우기
 templates/sangso.html      ← 디자인 (색·글꼴·배치를 바꾸려면 이 파일만)
-templates/court.js         ← 조회 장면 그림 + 말풍선 + 대화창 동작
+templates/court.js         ← 조회 장면(쿼터뷰 + SD 캐릭터) + 대화창 동작
 sample/first_sangso.json   ← 첫 상소 견본 (Claude 호출이 실패한 날엔 지난 상소나 이것이 대신 뜸)
 install/                   ← 운영체제별 예약 등록 스크립트
 ```
@@ -130,7 +134,7 @@ install/                   ← 운영체제별 예약 등록 스크립트
 | 분량 | `config.json`의 `min_chars_part1`, `min_chars_part2` |
 | 매일 돌아가는 주제 | `sangso_lib/prompt.py`의 `CLAUDE_CODE_TOPICS`, `LIFE_TOPICS` |
 | 말투·규칙 | `sangso_lib/prompt.py`의 `SYSTEM` |
-| 조회 장면(인물 위치·옷 색) | `templates/court.js` 아래쪽 '장면 조립' 부분 |
+| 조회 장면(인물 위치·옷 색·표정) | `templates/court.js` 위쪽 `CAST` 표 |
 | 디자인을 바꾼 뒤 지난 상소에도 적용 | `python sangso.py --redraw` (Claude 호출 없음) |
 | 색·글꼴·배치 | `templates/sangso.html` 맨 위 `:root { ... }` |
 | API 키 방식 사용 | `config.json`의 `engine`을 `"api"`로, `pip install anthropic`, 환경변수 `ANTHROPIC_API_KEY` 설정 |
