@@ -115,7 +115,7 @@ def call_api(system: str, user: str, cfg: dict) -> str:
 # ──────────────────────────────────────────────────────────────
 # 응답 → JSON
 # ──────────────────────────────────────────────────────────────
-def parse_json(raw: str) -> dict:
+def parse_json(raw: str, required=("title", "part1", "part2")) -> dict:
     """모델이 JSON 앞뒤에 말을 덧붙이거나 ```json 으로 감싸도 본문만 꺼냅니다."""
     raw = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw.strip())
     start, end = raw.find("{"), raw.rfind("}")
@@ -125,7 +125,7 @@ def parse_json(raw: str) -> dict:
         data = json.loads(raw[start:end + 1])
     except json.JSONDecodeError as e:
         raise EngineError(f"JSON 형식 오류: {e}") from e
-    for key in ("title", "part1", "part2"):
+    for key in required:
         if key not in data:
             raise EngineError(f"JSON에 '{key}' 항목이 없습니다")
     return data
@@ -138,39 +138,77 @@ def count_chars(part: dict) -> int:
     return len(re.sub(r"\s", "", text))
 
 
+EXPAND = """아래는 오늘 상소 {label}의 초안입니다. 지금 공백 제외 {have}자로, 목표 {need}자에 못 미칩니다.
+같은 말투·흐름·사실을 지키면서 공백 제외 {target}자 이상이 되도록 늘려 쓰십시오.
+- 기존 문단을 버리지 말고, 각 문단에 구체적인 예시·실행 순서·따라 할 수 있는 요청문 예시를 더하십시오.
+- 필요하면 소제목을 1~2개 더하십시오. 주공에 관한 새로운 사실을 지어내지는 마십시오.
+- 설명 없이 {{"heading": "...", "sections": [{{"subtitle": "...", "paragraphs": ["..."]}}]}} JSON 하나만 출력하십시오.
+
+[초안]
+{draft}
+
+[참고: 오늘 상소의 재료]
+{user}"""
+
+
+def _call(name: str, system: str, prompt: str, cfg: dict, workdir: Path) -> str:
+    return call_claude_cli(system, prompt, cfg, workdir) if name == "claude-cli" else call_api(system, prompt, cfg)
+
+
+def _expand(name, system, user, part, label, need, cfg, workdir, logdir, key) -> dict:
+    """모자란 장 하나만 초안을 건네고 늘려 쓰게 합니다. (전체를 다시 쓰게 하는 것보다 훨씬 확실합니다)"""
+    for attempt in (1, 2):
+        have = count_chars(part)
+        if have >= need:
+            break
+        log.info("[%s] %s 보강 %d차 (%d자 → 목표 %d자)", name, label, attempt, have, need)
+        prompt = EXPAND.format(label=label, have=have, need=need, target=int(need * 1.2),
+                               draft=json.dumps(part, ensure_ascii=False, indent=1), user=user)
+        try:
+            raw = _call(name, system, prompt, cfg, workdir)
+            (logdir / f"raw_{name}_{key}_expand{attempt}.txt").write_text(raw, encoding="utf-8")
+            new = parse_json(raw, required=())
+            new = new.get(key, new)  # 모델이 상소 전체 형식으로 답해도 해당 장만 꺼냅니다
+            if not isinstance(new, dict) or "sections" not in new:
+                raise EngineError("보강 결과에 sections가 없습니다")
+        except (EngineError, subprocess.TimeoutExpired, OSError) as e:
+            log.warning("[%s] %s 보강 실패: %s", name, label, e)
+            break
+        if count_chars(new) > have:
+            part = new
+    return part
+
+
 def generate(system: str, user: str, cfg: dict, workdir: Path, logdir: Path) -> dict:
-    """엔진을 골라 호출하고, 분량이 모자라면 한 번 더 요청합니다."""
+    """엔진을 골라 초안을 받고, 분량이 모자란 장은 따로 보강합니다."""
     engine = cfg.get("engine", "auto")
     order = {"auto": ["claude-cli", "api"], "claude-cli": ["claude-cli"], "api": ["api"]}.get(engine, ["claude-cli"])
-    min1, min2 = cfg["min_chars_part1"], cfg["min_chars_part2"]
+    needs = {"part1": ("제1장(클로드코드 운용책)", cfg["min_chars_part1"]),
+             "part2": ("제2장(대업과 삶의 방향)", cfg["min_chars_part2"])}
 
     errors = []
     for name in order:
-        best, prompt = None, user
-        for attempt in (1, 2):
+        data = None
+        for attempt in (1, 2):  # 형식(JSON)이 틀리면 한 번 더
             try:
-                raw = call_claude_cli(system, prompt, cfg, workdir) if name == "claude-cli" \
-                    else call_api(system, prompt, cfg)
+                raw = _call(name, system, user, cfg, workdir)
                 (logdir / f"raw_{name}_{attempt}.txt").write_text(raw, encoding="utf-8")
                 data = parse_json(raw)
+                break
             except (EngineError, subprocess.TimeoutExpired, OSError) as e:
                 log.warning("[%s] %d차 시도 실패: %s", name, attempt, e)
                 errors.append(f"{name}: {e}")
-                if attempt == 1 and isinstance(e, EngineError) and "JSON" in str(e):
-                    continue  # 형식만 틀린 거라면 한 번 더
-                break
+                if not (isinstance(e, EngineError) and "JSON" in str(e)):
+                    break
+        if data is None:
+            continue  # 다음 엔진으로
 
-            c1, c2 = count_chars(data["part1"]), count_chars(data["part2"])
-            log.info("[%s] %d차: 제1장 %d자, 제2장 %d자", name, attempt, c1, c2)
-            if best is None or c1 + c2 > best[1] + best[2]:
-                best = (data, c1, c2)
-            if c1 >= min1 and c2 >= min2:
-                return data
-            # 분량 부족 → 이유를 알려주고 다시 쓰게 합니다.
-            prompt = user + (f"\n\n[재요청] 앞서 쓴 초안은 제1장 {c1}자, 제2장 {c2}자로 분량이 모자랐습니다. "
-                             f"공백 제외 제1장 {min1}자, 제2장 {min2}자를 넉넉히 넘기도록 소제목을 늘리고 "
-                             f"구체적인 예시와 실행 방법을 더해 처음부터 다시 쓰십시오.")
-        if best:
-            log.warning("분량이 목표에 못 미쳤지만 가장 긴 초안을 사용합니다")
-            return best[0]
+        log.info("[%s] 초안: 제1장 %d자, 제2장 %d자", name, count_chars(data["part1"]), count_chars(data["part2"]))
+        for key, (label, need) in needs.items():
+            data[key] = _expand(name, system, user, data[key], label, need, cfg, workdir, logdir, key)
+        c1, c2 = count_chars(data["part1"]), count_chars(data["part2"])
+        log.info("[%s] 완성: 제1장 %d자, 제2장 %d자", name, c1, c2)
+        if c1 < needs["part1"][1] or c2 < needs["part2"][1]:
+            log.warning("보강 후에도 목표 분량에 못 미쳤습니다 (그대로 사용)")
+        return data
     raise EngineError(" / ".join(errors) or "모든 엔진 실패")
