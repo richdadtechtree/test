@@ -95,12 +95,20 @@
     return g;
   }
 
+  /* 말하는 동작: 지금 그리는 캐릭터가 말하는 중이면 A = { t: 초, mouth: 0~1(입 벌린 정도) }, 아니면 null.
+   * chibi()를 부르기 직전에 frame()이 정하고, 몸·고개·손·입 그리는 곳에서 이 값을 보고 살짝 움직입니다.
+   *   몸: 숨 쉬듯 살짝 늘었다 줄었다 / 고개: 가볍게 끄덕임 / 입: 글자가 찍히는 동안 뻥긋뻥긋
+   *   손: 제갈량은 부채를 부치고, 문관은 홀을 들썩이고, 무장은 빈손으로 손짓 */
+  var A = null;
+  function wave(speed, amp) { return A ? Math.sin(A.t * speed) * amp : 0; }
+
   /* ── 3. SD 캐릭터 한 명 그리기 ─────────────────────────────
    * 기준점(0,0)은 발밑. 위쪽이 음수. 키는 약 75px (머리가 몸의 절반쯤 되는 SD 비율).
    * f: 얼굴이 향한 쪽 (-1 왼쪽, 0 정면, 1 오른쪽) — 눈·입·수염을 그쪽으로 조금 옮겨 고개를 돌린 느낌을 냅니다. */
   function chibi(c, sp, f) {
     var skin = sp.skin || "#f7d9ba", hair = sp.hair || "#1c1512", armor = sp.armor, side = f || 1;
     c.lineJoin = "round"; c.lineCap = "round";
+    c.save(); c.scale(1, 1 + wave(5, .022));                                             // 말할 때 숨 쉬듯 (발밑 기준)
     // 망토(몸 뒤)
     if (sp.cape) svg(c, "M-12,-33 Q-19,-12 -16,-1 L16,-1 Q19,-12 12,-33 Z", vol(c, sp.cape, 0, -17, 19), OL, 1.3);
     // 긴 무기는 몸 뒤쪽에 세워 들고 있습니다
@@ -132,11 +140,13 @@
     held(c, sp, side, skin);
     ell(c, 0, -31, 11, 3.2, "rgba(0,0,0,.2)");                                             // 머리가 몸에 드리운 그늘
     head(c, sp, f || 0, skin, hair);
+    c.restore();
   }
 
   // 긴 무기 (창·언월도): 얼굴이 향한 쪽 손에 세워 듭니다
   function weapon(c, sp, side) {
     var x = 17 * side; // 몸통 바깥쪽에 세워야 자루가 보입니다
+    c.save(); c.translate(x, -24); c.rotate(wave(2.6, .05)); c.translate(-x, 24);    // 말할 때 무기가 살짝 흔들림
     c.strokeStyle = "#5a3a22"; c.lineWidth = 2.4; c.beginPath(); c.moveTo(x, 2); c.lineTo(x, -66); c.stroke();
     if (sp.hold === "spear") {
       poly(c, [[x - 3, -66], [x, -78], [x + 3, -66]], "#dfe5ec", OL, 1);
@@ -145,42 +155,48 @@
       svg(c, "M" + x + ",-66 Q" + (x + 12 * side) + ",-74 " + (x + 9 * side) + ",-88 Q" + (x + 2 * side) + ",-78 " + x + ",-80 Z", "#d9dee4", OL, 1.1); // 언월도 날
       ell(c, x, -64, 3, 2, "#2c7a3a");
     }
+    c.restore();
   }
 
   // 손과 든 물건
   function held(c, sp, side, skin) {
     var h = sp.hold;
     if (h === "tablet") {                     // 홀(笏): 문관이 두 손으로 받쳐 드는 판
-      c.save(); c.translate(0, -22); c.rotate(-.12 * side);
+      var ty = -Math.abs(wave(3, 2.6));                                          // 말할 때 홀을 들썩
+      c.save(); c.translate(0, -22 + ty); c.rotate(-.12 * side + wave(3, .08));
       svg(c, "M-2,-8 L2,-8 L2.4,6 L-2.4,6 Z", "#efe7d2", OL, 1); c.restore();
-      ell(c, 0, -17, 4.4, 3.2, vol(c, skin, 0, -17, 5.4), OL, 1);
+      ell(c, 0, -17 + ty, 4.4, 3.2, vol(c, skin, 0, -17 + ty, 5.4), OL, 1);
     } else if (h === "fan") {                  // 제갈량의 학우선(깃털 부채)
-      var fx = 9 * side;
-      c.save(); c.translate(fx, -22); c.rotate(-.35 * side);
+      var fx = 9 * side, fy = A ? -3 : 0;                                          // 말할 때 부채를 가슴께로 들어 천천히 부침
+      c.save(); c.translate(fx, -22 + fy); c.rotate(-.35 * side + wave(3.4, .38));
       svg(c, "M0,2 C-8,-4 -8,-16 0,-19 C8,-16 8,-4 0,2 Z", "#ffffff", OL, 1.1);
       c.strokeStyle = "rgba(120,125,135,.6)"; c.lineWidth = .7;
       for (var k = -2; k <= 2; k++) { c.beginPath(); c.moveTo(0, 1); c.lineTo(k * 2.6, -16 + Math.abs(k)); c.stroke(); }
       c.fillStyle = "#6a4a2a"; c.fillRect(-1, 1, 2, 5); c.restore();
-      ell(c, fx, -17, 3.4, 3, vol(c, skin, fx, -17, 4.4), OL, 1);
+      ell(c, fx, -17 + fy, 3.4, 3, vol(c, skin, fx, -17 + fy, 4.4), OL, 1);
     } else if (h === "scroll") {               // 마속의 병법서 두루마리
-      c.save(); c.translate(0, -19);
+      var sy = -Math.abs(wave(3, 2.4));                                          // 말할 때 두루마리를 흔들며 으쓱
+      c.save(); c.translate(0, -19 + sy); c.rotate(wave(3, .1));
       svg(c, "M-8,-3 L8,-3 L8,3 L-8,3 Z", "#efe0b8", OL, 1);
       ell(c, -8, 0, 1.6, 3.4, "#8a5a36", OL, .8); ell(c, 8, 0, 1.6, 3.4, "#8a5a36", OL, .8); c.restore();
-      ell(c, -5, -17, 3, 2.6, vol(c, skin, -5, -17, 4), OL, 1); ell(c, 5, -17, 3, 2.6, vol(c, skin, 5, -17, 4), OL, 1);
+      ell(c, -5, -17 + sy, 3, 2.6, vol(c, skin, -5, -17 + sy, 4), OL, 1); ell(c, 5, -17 + sy, 3, 2.6, vol(c, skin, 5, -17 + sy, 4), OL, 1);
     } else if (h === "sword") {                // 왕평: 허리에 찬 칼
       c.save(); c.translate(-6 * side, -12); c.rotate(.9 * side);
       c.fillStyle = "#3a2a1e"; c.fillRect(-1.6, -2, 3.2, 20); c.fillStyle = "#d9b24a"; c.fillRect(-3, -3, 6, 2);
       c.restore();
-      ell(c, 11 * side, -16, 3.2, 3, vol(c, skin, 11 * side, -16, 4.2), OL, 1); ell(c, -11 * side, -16, 3.2, 3, vol(c, skin, -11 * side, -16, 4.2), OL, 1);
+      var gy = A ? -5 + wave(5, 2.2) : 0;                                         // 말할 때 한 손을 들어 손짓
+      ell(c, 11 * side, -16 + gy, 3.2, 3, vol(c, skin, 11 * side, -16 + gy, 4.2), OL, 1); ell(c, -11 * side, -16, 3.2, 3, vol(c, skin, -11 * side, -16, 4.2), OL, 1);
     } else {                                   // 창·언월도를 쥔 손
       ell(c, 16 * side, -24, 3.4, 3.2, vol(c, skin, 16 * side, -24, 4.4), OL, 1);
-      ell(c, -10.5 * side, -16, 3.2, 3, vol(c, skin, -10.5 * side, -16, 4.2), OL, 1);
+      var hy2 = A ? -6 + wave(5, 2.4) : 0;                                        // 말할 때 빈손을 들어 손짓
+      ell(c, -10.5 * side, -16 + hy2, 3.2, 3, vol(c, skin, -10.5 * side, -16 + hy2, 4.2), OL, 1);
     }
   }
 
   // 머리: 뒷머리 → 얼굴 → 앞머리 → 눈썹·눈·볼·입 → 수염 → 모자
   function head(c, sp, f, skin, hair) {
     var hy = -46, fx = f * 3.2, m = sp.mood;
+    c.save(); c.translate(0, -31); c.rotate(wave(4.2, .07) * (f || 1)); c.translate(0, 31 + Math.abs(wave(4.2, 1.2))); // 고개 끄덕임
     if (sp.hat === "guanjin") {                                                 // 윤건의 끈 두 가닥 (머리 뒤로 늘어짐)
       svg(c, "M-9," + (hy - 8) + " Q-17," + (hy + 8) + " -12," + (hy + 24) + " L-9," + (hy + 23) + " Q-13," + (hy + 8) + " -6," + (hy - 7) + " Z", "#23233a");
       svg(c, "M9," + (hy - 8) + " Q17," + (hy + 8) + " 12," + (hy + 24) + " L9," + (hy + 23) + " Q13," + (hy + 8) + " 6," + (hy - 7) + " Z", "#23233a");
@@ -217,16 +233,22 @@
     }
     ell(c, fx - ex - 2.8, ey + 5, 2.6, 1.4, "rgba(240,118,104,.42)"); ell(c, fx + ex + 2.8, ey + 5, 2.6, 1.4, "rgba(240,118,104,.42)"); // 볼터치
     // 입
-    var my = ey + 7.5;
+    var my = ey + 7.5, open = A ? A.mouth : 0;
+    if (open > .12 && m !== "angry") {                                             // 말하는 입: 세로로 벌어지는 타원
+      ell(c, fx, my + .6, 2.2 + open * .6, .6 + open * 2, "#6a2018", "#4a1810", .8);
+      ell(c, fx, my + .6 + open * 1.1, 1.3, open * .8, "#d8706a");                  // 혀
+      m = "open";
+    }
     c.strokeStyle = "#7a3a2a"; c.lineWidth = 1.2; c.beginPath();
     if (m === "happy" || m === "eager") { c.moveTo(fx - 2.6, my - .6); c.quadraticCurveTo(fx, my + 2.4, fx + 2.6, my - .6); }
     else if (m === "stern") { c.moveTo(fx - 2.4, my + .6); c.quadraticCurveTo(fx, my - .8, fx + 2.4, my + .6); }
     else if (m === "sly" || m === "proud") { c.moveTo(fx - 2, my); c.quadraticCurveTo(fx + 1, my + 1, fx + 3, my - 1.4); }
-    else if (m !== "angry") { c.moveTo(fx - 1.8, my); c.lineTo(fx + 1.8, my); }
+    else if (m !== "angry" && m !== "open") { c.moveTo(fx - 1.8, my); c.lineTo(fx + 1.8, my); }
     c.stroke();
     beard(c, sp.beard, fx, ey, sp.hair);
-    if (m === "angry") svg(c, "M" + (fx - 3.6) + "," + (my - 1.4) + " L" + (fx + 3.6) + "," + (my - 1.4) + " Q" + fx + "," + (my + 3.6) + " " + (fx - 3.6) + "," + (my - 1.4) + " Z", "#fff6ea", "#5a2418", 1); // 위연의 이 드러낸 웃음
+    if (m === "angry") svg(c, "M" + (fx - 3.6) + "," + (my - 1.4) + " L" + (fx + 3.6) + "," + (my - 1.4) + " Q" + fx + "," + (my + 3.6 + open * 2.4) + " " + (fx - 3.6) + "," + (my - 1.4) + " Z", "#fff6ea", "#5a2418", 1); // 위연의 이 드러낸 웃음
     hat(c, sp, f, hy);
+    c.restore();
   }
 
   function beard(c, b, fx, ey, grey) {
@@ -458,7 +480,7 @@
   }
 
   /* ── 5. 매 프레임: 등불·연기 + 인물 + 이름표 + 말풍선 ─────── */
-  var NAMES = Object.keys(CAST), speaker = "", ctx = null, bg = null;
+  var NAMES = Object.keys(CAST), speaker = "", typing = false, ctx = null, bg = null; // typing: 대사 글자가 찍히는 중(입이 움직임)
   var LANTERNS = [[1.2, 9.6, 135], [1.2, 14, 135], [6, 1.2, 135], [12, 1.2, 135]].map(function (l) { return iso(l[0], l[1], l[2]); });
   function frame(ms) {
     var c = ctx, t = ms / 1000;
@@ -509,7 +531,7 @@
       .sort(function (a, b) { return a.y - b.y; });
     people.forEach(function (o) {
       var talk = o.n === speaker, bob = still ? 0 : Math.sin(t * 2.2 + o.s.x * 1.7) * .6;
-      var hop = talk && !still ? -Math.abs(Math.sin(t * 7)) * 3 : 0;
+      var hop = 0;
       // 부드러운 그림자: 빛이 왼쪽 위에서 오므로 오른쪽 아래로 비껴 떨어집니다
       c.save(); c.translate(o.x + 7, o.y + 2); c.scale(1.7, .55);
       var sg = c.createRadialGradient(0, 0, 1, 0, 0, 15);
@@ -518,7 +540,9 @@
       ell(c, o.x, o.y, 11, 3.6, "rgba(0,0,0,.35)");                                          // 발이 닿은 곳
       if (talk) ell(c, o.x, o.y, 17, 6, null, "rgba(255,210,100,.9)", 2);                     // 말하는 사람: 금빛 고리
       c.save(); c.translate(o.x, o.y + bob + hop); c.scale(1.05, 1.05);
+      A = talk && !still ? { t: t, mouth: typing ? Math.abs(Math.sin(t * 11)) : 0 } : null;
       chibi(c, o.s, o.s.f);
+      A = null;
       c.restore();
       if (talk) dots(c, o.x, o.y + hop - 104, t);
     });
@@ -601,6 +625,7 @@
     if (talk) talk.classList.remove("done");
     portrait(L.who);
     if (still) { finish(); return; }
+    typing = true;
     tText.textContent = "";
     type();
   }
@@ -610,7 +635,7 @@
     if (pos < L.text.length) timer = setTimeout(type, 38); else finish();
   }
   function finish() {
-    clear();
+    clear(); typing = false;
     var L = LINES[idx];
     tText.textContent = L.text;
     if (talk) talk.classList.add("done");
