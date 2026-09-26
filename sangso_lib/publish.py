@@ -222,6 +222,9 @@ def setup(base: Path) -> int:
         return 1
     old = load(base) or {}
     acct = input(f"① 계정 ID(Account ID)를 붙여 넣고 Enter {('[그대로: Enter]' if old else '')}: ").strip() or old.get("account_id", "")
+    # 주소창 글자를 통째로 붙여 넣어도(dash.cloudflare.com/1e1b…/home) 32자리 계정 ID만 골라냅니다
+    m = re.search(r"[0-9a-f]{32}", acct.lower())
+    acct = m.group(0) if m else acct
     print("② API 토큰을 붙여 넣고 Enter  (붙여 넣어도 화면에 글자가 안 보이는 게 정상입니다)")
     token = getpass.getpass("   토큰: ").strip() or old.get("api_token", "")
     default = old.get("project") or f"sangso-{secrets.token_hex(3)}"
