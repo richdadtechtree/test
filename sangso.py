@@ -11,6 +11,7 @@
   python sangso.py --redraw     Claude를 부르지 않고, 지난 상소들을 지금 디자인으로 다시 그립니다
   python sangso.py --new-art    조회 장면 배경을 그림(무료 이미지 서비스)으로 새로 뽑고, 지난 상소에도 적용합니다
   python sangso.py --update     GitHub의 최신 프로그램으로 새로 고치고, 지난 상소에도 적용합니다 (내 기록은 그대로)
+  python sangso.py --check      점검: 화면 버전과, 인물마다 어떤 초상화 파일을 쓰는지 보여 줍니다
 
 문제가 생기면 logs/sangso.log 를 먼저 열어 보세요. 무엇이 어디서 실패했는지 적혀 있습니다.
 """
@@ -116,11 +117,18 @@ def main() -> int:
     ap.add_argument("--sample", action="store_true", help="견본 상소를 띄운다")
     ap.add_argument("--no-open", action="store_true", help="창을 띄우지 않는다")
     ap.add_argument("--redraw", action="store_true", help="지난 상소들을 새 디자인으로 다시 그린다")
+    ap.add_argument("--check", action="store_true", help="점검: 화면 버전과 인물별 초상화 파일을 보여 준다")
     ap.add_argument("--update", action="store_true", help="GitHub의 최신 프로그램으로 새로 고친다 (내 기록·설정·그림은 그대로)")
     ap.add_argument("--new-art", action="store_true", help="조회 장면 배경을 그림으로 새로 뽑는다 (art_seed를 바꿔서). 기본은 코드로 그린 SD 캐릭터 장면")
     args = ap.parse_args()
 
     setup_logging()
+    if args.check:
+        print(f"화면 버전: v{render.UI_VERSION}  (창 왼쪽 위 버튼 옆 글자와 같으면 최신 화면)")
+        print(f"프로그램 폴더: {BASE}")
+        print("초상화 (assets/portraits 폴더):")
+        print(art.report(BASE / "assets"))
+        return 0
     if args.update:
         from sangso_lib import update
         try:

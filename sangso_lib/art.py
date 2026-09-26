@@ -98,11 +98,59 @@ def find(assets: Path, name: str) -> Path | None:
     return None
 
 
+def _stem(name: str) -> str:
+    """파일 이름에서 그림 확장자를 모두 뗍니다. 'Zhao_Yun.JPG.jpg' → 'zhao_yun'
+    (윈도우는 확장자를 숨겨서, 이름을 바꾸다 '.jpg'가 두 번 붙는 일이 흔합니다)"""
+    n = name.lower().strip()
+    while any(n.endswith(e) for e in EXTS):
+        n = n[: n.rfind(".")].strip()
+    return n
+
+
+def user_portrait(assets: Path, who: str) -> Path | None:
+    """내가 넣은 초상화를 너그럽게 찾습니다.
+      • 이름: 영문(zhao_yun) 또는 한글(조운). 대소문자·확장자(jpg/jpeg/png/webp)·'.jpg.jpg' 상관없음
+      • 자리: assets/portraits 안 (압축을 풀다 생긴 하위 폴더까지 뒤짐) → 없으면 assets 바로 아래
+      • 제갈량은 예전 이름 portrait.jpg 도 인정
+    기본 그림(_default)·자동 그림(_auto)은 여기서 찾지 않습니다."""
+    if who not in CAST_IDS:
+        return None
+    names = {CAST_IDS[who], who.lower()} | ({"portrait"} if who == "제갈량" else set())
+    for place, deep in ((assets / "portraits", True), (assets, False)):
+        if not place.is_dir():
+            continue
+        files = place.rglob("*") if deep else place.glob("*")
+        hits = [f for f in files if f.is_file() and f.suffix.lower() in EXTS and _stem(f.name) in names]
+        if hits:
+            return min(hits, key=lambda f: (len(f.parts), str(f)))  # 가장 얕은 자리에 있는 것
+    return None
+
+
 def portrait(assets: Path, who: str) -> Path | None:
-    """대화창 초상화. 제갈량은 예전 위치(assets/portrait.*)도 먼저 찾아 봅니다."""
+    """대화창 초상화: 내가 넣은 그림 → (제갈량만) 자동 그림 → 기본 그림. 없으면 None(→ SD 캐릭터 얼굴)."""
+    if (f := user_portrait(assets, who)):
+        return f
     if who == "제갈량" and (f := find(assets, "portrait")):
         return f
     return find(assets / "portraits", CAST_IDS[who]) if who in CAST_IDS else None
+
+
+def report(assets: Path) -> str:
+    """python sangso.py --check 에서 보여 줄 '누가 어떤 초상화를 쓰는지' 표"""
+    lines = []
+    for who, pid in CAST_IDS.items():
+        f = portrait(assets, who)
+        kind = ("기본 그림" if f and f.name.endswith("_default.jpg") else "자동 그림" if f and "_auto" in f.name
+                else "내가 넣은 그림 ✔" if f else "없음 → SD 캐릭터 얼굴")
+        where = f.relative_to(assets.parent).as_posix() if f else ""
+        lines.append(f"  {who:<4} ({pid}.jpg)  {kind:<14} {where}")
+    # 어느 인물에게도 쓰이지 않은 그림 파일 → 이름이 틀렸을 가능성
+    used = {portrait(assets, w) for w in CAST_IDS}
+    extra = [f for f in (assets / "portraits").rglob("*") if f.is_file() and f.suffix.lower() in EXTS
+             and f not in used and not _stem(f.name).endswith(("_default", "_auto"))] if (assets / "portraits").is_dir() else []
+    if extra:
+        lines.append("  ⚠ 쓰이지 않은 그림(이름을 확인하세요): " + ", ".join(f.relative_to(assets).as_posix() for f in extra))
+    return "\n".join(lines)
 
 
 def _download(prompt: str, w: int, h: int, seed: int, dest: Path) -> bool:

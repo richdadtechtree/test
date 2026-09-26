@@ -19,6 +19,7 @@
   - 배경을 그림으로 바꾸고 싶으면 `assets/court.jpg`(직접 만든 그림)를 넣거나, `python sangso.py --new-art`로 무료 이미지 서비스 [Pollinations](https://pollinations.ai)에서 뽑은 `assets/court_auto.jpg`를 씁니다. 이때는 SD 캐릭터 대신 그 그림이 보이고 대화창만 움직입니다. 되돌리려면 그 파일을 지우세요.
 - **대화창 초상화**: `assets/portraits/<영문이름>_default.jpg`(저장소에 들어 있음). Pollinations에서 장수마다 시드를 바꿔 여러 장 뽑아 가장 나은 것을 고르고 워터마크를 잘라 낸 그림입니다. 프롬프트는 `sangso_lib/art.py`의 `PORTRAIT_BASE`·`GENERALS`에 있습니다.
   - 내 초상화를 쓰려면 `assets/portraits/<영문이름>.jpg`(.png도 됨)를 넣으세요(git에는 올라가지 않음). 영문 이름은 `art.py`의 `CAST_IDS` 표 참고 (예: 위연 → `wei_yan.jpg`, 사마의 → `sima_yi.jpg`). 제갈량은 예전처럼 `assets/portrait.jpg`도 됩니다.
+  - 이름은 영문(`zhao_yun.jpg`)이나 한글(`조운.jpg`) 모두 되고, 대소문자·`.png`·압축을 풀다 생긴 하위 폴더도 알아서 찾습니다. 안 바뀌면 `python sangso.py --check`로 어떤 파일을 쓰는지 확인하세요.
   - 초상화 파일이 없으면 SD 캐릭터 얼굴을 크게 그려 대신 씁니다.
   - 참고: 2026년 9월 현재 Pollinations 무료 사용자에게는 `sana` 모델만 열려 있어 품질이 들쭉날쭉하고, 오른쪽 아래에 워터마크가 찍힙니다.
 
@@ -101,6 +102,7 @@ python sangso.py --no-open    # 창은 띄우지 않고 파일만 만든다
 python sangso.py --redraw     # 지난 상소들을 지금 디자인으로 다시 그린다
 python sangso.py --new-art    # 조회 장면 배경을 그림으로 새로 뽑는다 (기본은 SD 캐릭터 장면)
 python sangso.py --update     # GitHub의 최신 프로그램으로 새로 고친다 (내 기록·설정·그림은 그대로) + 지난 상소 다시 그림
+python sangso.py --check      # 점검: 화면 버전 + 인물마다 어떤 초상화 파일을 쓰는지 (그림이 안 바뀔 때)
 ```
 
 만들어진 상소는 `output/날짜.html`에, 원문 데이터는 `archive/날짜.json`에 쌓입니다.

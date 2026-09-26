@@ -19,6 +19,7 @@ import webbrowser
 from datetime import date
 from pathlib import Path
 from string import Template
+from urllib.parse import quote
 
 from . import art
 from .engine import count_chars
@@ -26,7 +27,7 @@ from .engine import count_chars
 log = logging.getLogger("sangso")
 
 # 화면(템플릿·court.js) 버전. 화면 오른쪽 아래에 작게 보입니다 → "내 화면이 최신인가?"를 확인하는 용도
-UI_VERSION = "2026.09.26"
+UI_VERSION = "2026.09.26b"
 
 STEMS, BRANCHES = "甲乙丙丁戊己庚辛壬癸", "子丑寅卯辰巳午未申酉戌亥"
 
@@ -81,7 +82,8 @@ def render(data: dict, day: date, out_dir: Path, template: Path, engine_label: s
 
     # 그림 파일이 있으면 코드 그림 대신 사용합니다 (art.py 참고). ?v=… 는 그림을 바꿨을 때 브라우저가 옛 그림을 쓰지 않게 합니다
     def url(f: Path | None) -> str:
-        return f"../{f.relative_to(out_dir.parent).as_posix()}?v={int(f.stat().st_mtime)}" if f else ""
+        # 한글·띄어쓰기가 든 폴더 이름도 주소로 쓸 수 있게 quote 로 감쌉니다
+        return f"../{quote(f.relative_to(out_dir.parent).as_posix())}?v={int(f.stat().st_mtime)}" if f else ""
     assets = out_dir.parent / "assets"
     court_img, portrait_img = url(art.find(assets, "court")), url(art.portrait(assets, "제갈량"))
     # 대화창 초상화: 이름 → 그림 주소. 없는 사람은 court.js 가 SD 캐릭터 얼굴로 대신 그립니다
