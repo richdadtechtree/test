@@ -27,7 +27,7 @@ from .engine import count_chars
 log = logging.getLogger("sangso")
 
 # 화면(템플릿·court.js) 버전. 화면 오른쪽 아래에 작게 보입니다 → "내 화면이 최신인가?"를 확인하는 용도
-UI_VERSION = "2026.09.26b"
+UI_VERSION = "2026.09.26c"
 
 STEMS, BRANCHES = "甲乙丙丁戊己庚辛壬癸", "子丑寅卯辰巳午未申酉戌亥"
 

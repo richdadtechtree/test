@@ -28,26 +28,43 @@
   var still = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
 
   /* ── 1. 등장인물 ─────────────────────────────────────────────
-   * robe: 옷 색 / trim: 깃·단 색 / armor: 갑옷 색(무장만) / hat: guanjin(윤건)·guan(관모)·scarf(복건)·helmet(투구)·band(머리띠)
-   * beard: long·grey·full·short·goatee·mustache·stubble·none / mood: 표정 / hold: 든 물건
+   * 모습은 대화창 초상화(삼국지 시리즈 그림)에 맞췄습니다. 항목 뜻:
+   *   robe: 옷 색 / trim: 깃·소맷부리·옷단 색 / armor: 갑옷 색(무장만) / shoulder: 어깨 갑옷 색 / cape: 망토
+   *   hat: tall(높은 관 — hatCol 색, top: flat·round·flare, ribs 골, spiral 소용돌이 장식, emblem 금장식)
+   *        crown(상투 + 작은 금관) · hood(두건 + 금 머리띠) · topknot(맨 상투) · helmet(투구 — helm 색, plume 술, mane 흰 갈기)
+   *   scarf: 목도리 색 (scarfType: knot 매듭 · shawl 어깨걸이) / longHair: 등 뒤로 늘어진 긴 머리 / panel: 앞섶 세로 띠
+   *   beard: vandyke(콧수염+뾰족 턱수염)·vandykeLong·full·mustache·none / mood: 표정 / hold: 든 물건
+   *   wide: 넉넉한 도포와 넓은 소매(승상) / fanCol·fanSize: 부채 색·크기 / size: 크기 배율(승상은 조금 크게) / bubble: '…' 말풍선 높이
    * x, y: 서 있는 바닥 칸 (아래 '쿼터뷰 좌표' 참고) / f: 바라보는 쪽 (-1 화면 왼쪽, 1 오른쪽)
    * 붉은 융단(y = 4.5~6.5)이 단상에서 화면 오른쪽 아래로 비스듬히 뻗고, 그 양옆에 한 줄씩 섭니다. 사마의는 신하들과 떨어져 왼쪽 앞 창가에 홀로.
    *   위쪽 줄(y = 3.6) 문관 5명, 아래쪽 줄(y = 7.4) 무장 4명. 단상에 가까울수록 윗자리, x 가 1.6씩 늘며 뒤로.
    *   (아래쪽 줄은 화면 앞이라 단상과 겹치지 않도록 반 칸 뒤에서 시작합니다)
    *   신하들은 모두 단상의 승상 쪽(화면 왼쪽 위)을 바라보고, 승상은 신하들 쪽(오른쪽 아래)을 봅니다. */
   var CAST = {
-    "제갈량": { hj: "諸葛亮", robe: "#f5f2ea", trim: "#27335c", hat: "guanjin", beard: "long", mood: "calm", hold: "fan", x: 2.3, y: 5.5, f: 1 },
-    "장완": { hj: "蔣琬", robe: "#3f7a52", trim: "#eadcae", hat: "guan", beard: "short", mood: "calm", hold: "tablet", x: 5.4, y: 3.6, f: -1 },
-    "비의": { hj: "費禕", robe: "#4b8cc4", trim: "#f2e5bb", hat: "guan", beard: "mustache", mood: "happy", hold: "tablet", x: 7.0, y: 3.6, f: -1 },
-    "동윤": { hj: "董允", robe: "#62437e", trim: "#dcc68c", hat: "guan", beard: "grey", mood: "stern", hold: "tablet", x: 8.6, y: 3.6, f: -1, hair: "#8f8b86" },
-    "양의": { hj: "楊儀", robe: "#7d6b57", trim: "#dccda3", hat: "guan", beard: "goatee", mood: "sly", hold: "tablet", x: 10.2, y: 3.6, f: -1 },
-    "마속": { hj: "馬謖", robe: "#2e8984", trim: "#f2e7c2", hat: "scarf", beard: "none", mood: "proud", hold: "scroll", x: 11.8, y: 3.6, f: -1 },
-    "조운": { hj: "趙雲", robe: "#c9d2de", armor: "#eef1f6", cape: "#fbfbfb", hat: "helmet", plume: "#ffffff", beard: "none", mood: "calm", hold: "spear", x: 6.0, y: 7.4, f: -1 },
-    "위연": { hj: "魏延", robe: "#5a1d15", armor: "#9a3526", hat: "helmet", plume: "#221a18", beard: "full", mood: "angry", hold: "glaive", x: 7.6, y: 7.4, f: -1, skin: "#e0ab7f" },
-    "강유": { hj: "姜維", robe: "#2f4f8f", armor: "#9fb2cc", hat: "band", band: "#cc3328", beard: "none", mood: "eager", hold: "spear", x: 9.2, y: 7.4, f: -1 },
-    "왕평": { hj: "王平", robe: "#4c3b2a", armor: "#86663f", hat: "helmet", plume: "#9b3b2a", beard: "stubble", mood: "calm", hold: "sword", x: 10.8, y: 7.4, f: -1 },
+    // 청록 높은 관 + 금테, 등 뒤 긴 머리, 남색 테 두른 흰 도포, 큼직한 흰 깃털 부채
+    "제갈량": { hj: "諸葛亮", robe: "#f6f3ec", trim: "#27336a", hat: "tall", hatCol: "#2fa39c", top: "flare", ribs: true, emblem: true, longHair: true, panel: true, wide: true,
+      beard: "vandykeLong", mood: "calm", hold: "fan", fanSize: 1.55, size: 1.16, bubble: 134, x: 2.3, y: 5.5, f: 1 },
+    // 소용돌이 장식의 청록 관, 청록 겉옷 + 베이지 속옷
+    "장완": { hj: "蔣琬", robe: "#35898a", trim: "#ecdfc2", hat: "tall", hatCol: "#2f9a93", top: "round", spiral: true, beard: "vandyke", mood: "calm", hold: "tablet", bubble: 116, x: 5.4, y: 3.6, f: -1 },
+    // 자줏빛 붉은 높은 관 + 금장식, 초록 어깨걸이
+    "비의": { hj: "費禕", robe: "#b39a62", trim: "#efe2bd", hat: "tall", hatCol: "#8c2c22", top: "flat", emblem: true, scarf: "#4e8a34", scarfType: "shawl", beard: "vandyke", mood: "smile", hold: "tablet", bubble: 114, x: 7.0, y: 3.6, f: -1 },
+    // 검은 관, 청록 도포 + 흰 깃, 검은 수염
+    "동윤": { hj: "董允", robe: "#2e8595", trim: "#f2efe6", hat: "tall", hatCol: "#26272e", top: "round", ribs: true, beard: "vandyke", mood: "stern", hold: "tablet", bubble: 110, x: 8.6, y: 3.6, f: -1 },
+    // 상투 + 작은 금관, 연두 도포, 가는 콧수염, 가슴에 손
+    "양의": { hj: "楊儀", robe: "#7fae78", trim: "#3f6a44", hat: "crown", beard: "mustache", mood: "sly", hold: "chest", x: 10.2, y: 3.6, f: -1 },
+    // 상투 + 작은 금관, 초록 어깨걸이, 갈색 깃털 부채
+    "마속": { hj: "馬謖", robe: "#3e4652", trim: "#9aa3ad", hat: "crown", scarf: "#6f9a36", scarfType: "shawl", beard: "none", mood: "proud", hold: "fan", fanCol: "#b58a58", fanSize: 1.1, x: 11.8, y: 3.6, f: -1 },
+    // 은빛 투구 + 흰 갈기, 흰 목도리·망토, 푸른빛 갑옷
+    "조운": { hj: "趙雲", robe: "#48559a", armor: "#c9cfdb", shoulder: "#dfe3ea", cape: "#fbfbfb", hat: "helmet", helm: "#d7dce4", mane: true, scarf: "#ffffff", beard: "none", mood: "calm", hold: "spear", x: 6.0, y: 7.4, f: -1 },
+    // 맨 상투, 덥수룩한 수염, 붉은 목도리, 검붉은 갑옷 + 금 어깨
+    "위연": { hj: "魏延", robe: "#4a1a14", armor: "#6e2a20", shoulder: "#c9a24a", hat: "topknot", scarf: "#d23a2a", beard: "full", mood: "angry", hold: "glaive", x: 7.6, y: 7.4, f: -1, skin: "#e0ab7f" },
+    // 초록 두건 + 금 머리띠, 흰 목도리, 금·초록 갑옷
+    "강유": { hj: "姜維", robe: "#3a7a46", armor: "#c9a24a", shoulder: "#d9b24a", hat: "hood", hatCol: "#3f8f4c", scarf: "#f6f4ee", beard: "none", mood: "eager", hold: "spear", x: 9.2, y: 7.4, f: -1 },
+    // 쇠 투구 + 붉은 술, 회색 비늘 갑옷, 초록 목도리
+    "왕평": { hj: "王平", robe: "#3a5a3e", armor: "#8d939b", hat: "helmet", helm: "#9aa0a8", plume: "#b8322a", scarf: "#3f8a4a", beard: "vandyke", mood: "calm", hold: "sword", x: 10.8, y: 7.4, f: -1 },
     // 적국 위(魏)의 맞수. 촉의 신하들과 떨어져 왼쪽 앞 창가(햇빛 드는 곳)에 홀로 서서 승상을 바라봅니다. 조회 마지막에 반대 의견을 던집니다
-    "사마의": { hj: "司馬懿", robe: "#4a3c6e", trim: "#d8d0c0", cape: "#b9b4ac", hat: "guan", beard: "goatee", mood: "scheme", hold: "crossed", x: 4.0, y: 10.0, f: 1, rival: true },
+    // 높고 각진 검은 관 + 금장식, 보라 도포, 회색 망토, 팔짱
+    "사마의": { hj: "司馬懿", robe: "#4a3c6e", trim: "#d8d0c0", cape: "#b9b4ac", hat: "tall", hatCol: "#1f1f26", top: "flat", emblem: true, beard: "vandyke", mood: "scheme", hold: "crossed", bubble: 118, x: 4.0, y: 10.0, f: 1, rival: true },
   };
   var OL = "#2a1a12"; // 캐릭터 외곽선 색
 
@@ -114,13 +131,19 @@
     c.save(); c.scale(1, 1 + wave(5, .022));                                             // 말할 때 숨 쉬듯 (발밑 기준)
     // 망토(몸 뒤)
     if (sp.cape) svg(c, "M-12,-33 Q-19,-12 -16,-1 L16,-1 Q19,-12 12,-33 Z", vol(c, sp.cape, 0, -17, 19), OL, 1.3);
+    // 등 뒤로 늘어진 긴 머리 (몸보다 먼저 그려서 어깨 너머로만 보이게)
+    if (sp.longHair) {
+      svg(c, "M-11,-44 Q-20,-32 -18,-11 L-13,-12 Q-14,-30 -7,-42 Z", vol(c, hair, -15, -28, 12), OL, 1);
+      svg(c, "M11,-44 Q20,-32 18,-11 L13,-12 Q14,-30 7,-42 Z", vol(c, hair, 15, -28, 12), OL, 1);
+    }
     // 긴 무기는 몸 뒤쪽에 세워 들고 있습니다
     if (sp.hold === "spear" || sp.hold === "glaive") weapon(c, sp, side);
     // 신발
     ell(c, -5, -2, 4.6, 2.8, vol(c, "#3a2e28", -5, -2, 5), OL, 1); ell(c, 5, -2, 4.6, 2.8, vol(c, "#3a2e28", 5, -2, 5), OL, 1);
     // 몸통(옷)
-    svg(c, "M-9,-31 L9,-31 Q12,-16 14,-4 Q0,0 -14,-4 Q-12,-16 -9,-31 Z", vol(c, sp.robe, 0, -17, 18), OL, 1.4);
-    svg(c, "M4,-30 Q9,-16 10,-3 L14,-4 Q12,-16 9,-31 Z", "rgba(0,0,0,.13)");                  // 옷 주름(그늘진 쪽)
+    var W2 = sp.wide ? 17.5 : 14;                                                          // 옷자락 폭 (승상은 넉넉하게)
+    svg(c, "M-9.5,-31 L9.5,-31 Q" + (W2 - 3) + ",-16 " + W2 + ",-3 Q0,1 -" + W2 + ",-3 Q-" + (W2 - 3) + ",-16 -9.5,-31 Z", vol(c, sp.robe, 0, -17, 19), OL, 1.4);
+    svg(c, "M4,-30 Q9,-16 10,-3 L" + W2 + ",-3 Q" + (W2 - 3) + ",-16 9.5,-31 Z", "rgba(0,0,0,.13)");     // 옷 주름(그늘진 쪽)
     if (armor) {
       svg(c, "M-8.5,-30 L8.5,-30 L9.5,-13 Q0,-11 -9.5,-13 Z", vol(c, armor, 0, -22, 13), OL, 1.1);                 // 가슴 갑옷
       c.strokeStyle = shade(armor, .72); c.lineWidth = .9;
@@ -128,22 +151,55 @@
       svg(c, "M-12,-10 L12,-10 L13,-4 Q0,-1 -13,-4 Z", vol(c, shade(armor, .85), 0, -7, 14), OL, 1);            // 허리 아래 갑옷 자락
       ell(c, 0, -13, 3, 2.2, vol(c, "#d9b24a", 0, -13, 3.5), OL, .8);                                            // 허리띠 장식
     } else {
-      svg(c, "M-14,-4 Q0,0 14,-4 L13.4,-7 Q0,-3.5 -13.4,-7 Z", vol(c, sp.trim, 0, -5, 15));                    // 옷단
+      svg(c, "M-" + W2 + ",-3 Q0,1 " + W2 + ",-3 L" + (W2 - .7) + ",-6.4 Q0,-2.6 -" + (W2 - .7) + ",-6.4 Z", vol(c, sp.trim, 0, -4, W2));   // 옷단
       c.strokeStyle = sp.trim; c.lineWidth = 2.6;
       c.beginPath(); c.moveTo(-6, -31); c.lineTo(1, -21); c.moveTo(6, -31); c.lineTo(-1, -22); c.stroke(); // 여민 깃
+      if (sp.panel) { c.lineWidth = 3.4; c.beginPath(); c.moveTo(1, -21); c.lineTo(1.6, -3); c.stroke(); }   // 앞섶 세로 띠
       svg(c, "M-10,-18 L10,-18 L10.4,-15 L-10.4,-15 Z", shade(sp.trim, .7));                   // 허리띠
     }
     // 소매·팔
     var sleeve = armor ? shade(armor, .9) : sp.robe;
-    ell(c, -10.5, -21, 4.6, 7.2, vol(c, sleeve, -10.5, -21, 8), OL, 1.2); ell(c, 10.5, -21, 4.6, 7.2, vol(c, sleeve, 10.5, -21, 8), OL, 1.2);
+    var sx = sp.wide ? 12.5 : 10.5, srx = sp.wide ? 6.4 : 4.6, sry = sp.wide ? 9.6 : 7.2, sy = sp.wide ? -19 : -21; // 소매 (승상은 넓은 소매)
+    ell(c, -sx, sy, srx, sry, vol(c, sleeve, -sx, sy, sry + 1), OL, 1.2); ell(c, sx, sy, srx, sry, vol(c, sleeve, sx, sy, sry + 1), OL, 1.2);
+    if (!armor && sp.trim) { ell(c, -sx, sy + sry - 1.6, srx - .4, 2, vol(c, sp.trim, -sx, sy + sry - 1.6, srx)); ell(c, sx, sy + sry - 1.6, srx - .4, 2, vol(c, sp.trim, sx, sy + sry - 1.6, srx)); } // 소맷부리 테
     if (armor) {                                                                              // 어깨 갑옷 + 반짝임
-      ell(c, -10.5, -28, 5.4, 3.8, vol(c, armor, -10.5, -28, 6), OL, 1.1); ell(c, 10.5, -28, 5.4, 3.8, vol(c, armor, 10.5, -28, 6), OL, 1.1);
+      var sh = sp.shoulder || armor;
+      ell(c, -10.5, -28, 5.4, 3.8, vol(c, sh, -10.5, -28, 6), OL, 1.1); ell(c, 10.5, -28, 5.4, 3.8, vol(c, sh, 10.5, -28, 6), OL, 1.1);
       ell(c, -12.5, -29.2, 1.8, 1, "rgba(255,255,255,.55)"); ell(c, 8.5, -29.2, 1.8, 1, "rgba(255,255,255,.4)");
     }
+    if (sp.scarf) neckScarf(c, sp, f || 0);
     held(c, sp, side, skin);
     ell(c, 0, -31, 11, 3.2, "rgba(0,0,0,.2)");                                             // 머리가 몸에 드리운 그늘
     head(c, sp, f || 0, skin, hair);
+    if (sp.hold === "fan") fan(c, sp, side, skin);
     c.restore();
+  }
+
+  // 깃털 부채(제갈량의 학우선·마속의 부채): 어깨 옆에 세워 들어 얼굴 옆으로 보이게. 말할 때 천천히 부침
+  function fan(c, sp, side, skin) {
+    var fx = (sp.wide ? 15 : 12) * side, fy = (A ? -3 : 0) - 20, k = sp.fanSize || 1.2;
+    c.save(); c.translate(fx, fy); c.rotate(.22 * side + wave(3.4, .3)); c.scale(k, k);
+    svg(c, "M0,2 C-9,-4 -9,-17 0,-21 C9,-17 9,-4 0,2 Z", vol(c, sp.fanCol || "#ffffff", -2, -11, 11), OL, 1.1);
+    c.strokeStyle = "rgba(110,115,128,.75)"; c.lineWidth = .8;                           // 깃털 결
+    for (var q = -3; q <= 3; q++) { c.beginPath(); c.moveTo(0, 1); c.lineTo(q * 2.3, -18 + Math.abs(q) * 1.1); c.stroke(); }
+    svg(c, "M-3,1 Q0,-2 3,1 L2,4 L-2,4 Z", vol(c, "#2a2a3a", 0, 2, 3), OL, .7);             // 부채 받침
+    c.fillStyle = "#6a4a2a"; c.fillRect(-1, 3.5, 2, 6); c.restore();                      // 손잡이
+    ell(c, fx, fy + 7 * k, 3.4, 3, vol(c, skin, fx, fy + 7 * k, 4.4), OL, 1);            // 부채를 쥔 손
+  }
+
+  // 목도리(매듭) 또는 어깨걸이(넓게 두른 천)
+  function neckScarf(c, sp, f) {
+    var col = sp.scarf, kx = f * 2.2;
+    if (sp.scarfType === "shawl") {
+      svg(c, "M-13,-32 Q0,-26 13,-32 L15.5,-23 Q0,-16 -15.5,-23 Z", vol(c, col, 0, -26, 15), OL, 1.1);
+      c.strokeStyle = shade(col, .7); c.lineWidth = .8;
+      [-8, -3, 3, 8].forEach(function (x) { c.beginPath(); c.moveTo(x * .9, -29); c.lineTo(x * 1.15, -21); c.stroke(); }); // 천 주름
+      ell(c, kx, -27, 2.4, 2, vol(c, col, kx, -27, 3), OL, .8);
+    } else {
+      svg(c, "M-10.5,-33 Q0,-27.5 10.5,-33 L11,-29.5 Q0,-23.5 -11,-29.5 Z", vol(c, col, 0, -29, 12), OL, 1);
+      svg(c, "M" + (kx - 1) + ",-27 Q" + (kx - 4) + ",-20 " + (kx - 2) + ",-14 L" + (kx + 1.5) + ",-15 Q" + kx + ",-21 " + (kx + 2) + ",-27 Z", vol(c, col, kx, -21, 7), OL, .9); // 늘어진 끝
+      ell(c, kx, -27.5, 3, 2.4, vol(c, col, kx, -27.5, 3.5), OL, .9);          // 매듭
+    }
   }
 
   // 긴 무기 (창·언월도): 얼굴이 향한 쪽 손에 세워 듭니다
@@ -169,14 +225,7 @@
       c.save(); c.translate(0, -22 + ty); c.rotate(-.12 * side + wave(3, .08));
       svg(c, "M-2,-8 L2,-8 L2.4,6 L-2.4,6 Z", "#efe7d2", OL, 1); c.restore();
       ell(c, 0, -17 + ty, 4.4, 3.2, vol(c, skin, 0, -17 + ty, 5.4), OL, 1);
-    } else if (h === "fan") {                  // 제갈량의 학우선(깃털 부채)
-      var fx = 9 * side, fy = A ? -3 : 0;                                          // 말할 때 부채를 가슴께로 들어 천천히 부침
-      c.save(); c.translate(fx, -22 + fy); c.rotate(-.35 * side + wave(3.4, .38));
-      svg(c, "M0,2 C-8,-4 -8,-16 0,-19 C8,-16 8,-4 0,2 Z", "#ffffff", OL, 1.1);
-      c.strokeStyle = "rgba(120,125,135,.6)"; c.lineWidth = .7;
-      for (var k = -2; k <= 2; k++) { c.beginPath(); c.moveTo(0, 1); c.lineTo(k * 2.6, -16 + Math.abs(k)); c.stroke(); }
-      c.fillStyle = "#6a4a2a"; c.fillRect(-1, 1, 2, 5); c.restore();
-      ell(c, fx, -17 + fy, 3.4, 3, vol(c, skin, fx, -17 + fy, 4.4), OL, 1);
+    } else if (h === "fan") {                  // 깃털 부채는 머리를 그린 뒤 fan()에서 (얼굴에 가려지지 않게)
     } else if (h === "scroll") {               // 마속의 병법서 두루마리
       var sy = -Math.abs(wave(3, 2.4));                                          // 말할 때 두루마리를 흔들며 으쓱
       c.save(); c.translate(0, -19 + sy); c.rotate(wave(3, .1));
@@ -189,6 +238,9 @@
       c.restore();
       var gy = A ? -5 + wave(5, 2.2) : 0;                                         // 말할 때 한 손을 들어 손짓
       ell(c, 11 * side, -16 + gy, 3.2, 3, vol(c, skin, 11 * side, -16 + gy, 4.2), OL, 1); ell(c, -11 * side, -16, 3.2, 3, vol(c, skin, -11 * side, -16, 4.2), OL, 1);
+    } else if (h === "chest") {                // 양의: 한 손을 가슴에 얹음 (말할 때 살짝 들썩)
+      var py = -Math.abs(wave(3, 1.8));
+      ell(c, 2 * side, -24 + py, 3.4, 3, vol(c, skin, 2 * side, -24 + py, 4.4), OL, 1);
     } else if (h === "crossed") {              // 사마의: 팔짱 (말할 때 팔을 살짝 들썩)
       var cy = -Math.abs(wave(2.4, 1.6));
       svg(c, "M-13," + (-25 + cy) + " Q0," + (-28 + cy) + " 13," + (-25 + cy) + " L13," + (-17 + cy) + " Q0," + (-14 + cy) + " -13," + (-17 + cy) + " Z", vol(c, sp.robe, 0, -21 + cy, 14), OL, 1.2);
@@ -206,6 +258,15 @@
   function head(c, sp, f, skin, hair) {
     var hy = -46, fx = f * 3.2, m = sp.mood;
     c.save(); c.translate(0, -31); c.rotate(wave(4.2, .07) * (f || 1)); c.translate(0, 31 + Math.abs(wave(4.2, 1.2))); // 고개 끄덕임
+    var back = f ? -f : 1;                                                        // 머리 뒤쪽(얼굴 반대편)
+    if (sp.hat === "hood") {                                                      // 강유: 두건 자락이 뒤로 늘어짐
+      svg(c, "M" + (back * 6) + "," + (hy - 12) + " Q" + (back * 22) + "," + (hy - 2) + " " + (back * 19) + "," + (hy + 20) + " L" + (back * 13) + "," + (hy + 18) + " Q" + (back * 15) + "," + (hy + 2) + " " + (back * 2) + "," + (hy - 6) + " Z", vol(c, sp.hatCol, back * 14, hy + 4, 14), OL, 1);
+    }
+    if (sp.mane) {                                                                // 조운: 투구 위로 흩날리는 흰 갈기
+      for (var mi = 0; mi < 4; mi++) {
+        svg(c, "M" + (back * -2) + "," + (hy - 22) + " Q" + (back * (14 + mi * 5)) + "," + (hy - 30 + mi * 4) + " " + (back * (22 + mi * 3)) + "," + (hy - 8 + mi * 9) + " Q" + (back * (10 + mi * 3)) + "," + (hy - 12 + mi * 5) + " " + (back * 2) + "," + (hy - 16) + " Z", vol(c, "#f4f6f9", back * 14, hy - 12, 16), OL, .9);
+      }
+    }
     if (sp.hat === "guanjin") {                                                 // 윤건의 끈 두 가닥 (머리 뒤로 늘어짐)
       svg(c, "M-9," + (hy - 8) + " Q-17," + (hy + 8) + " -12," + (hy + 24) + " L-9," + (hy + 23) + " Q-13," + (hy + 8) + " -6," + (hy - 7) + " Z", "#23233a");
       svg(c, "M9," + (hy - 8) + " Q17," + (hy + 8) + " 12," + (hy + 24) + " L9," + (hy + 23) + " Q13," + (hy + 8) + " 6," + (hy - 7) + " Z", "#23233a");
@@ -220,7 +281,7 @@
     var ex = 5.2, ey = hy + 4, brow = sp.hair && sp.beard === "grey" ? "#6f6a64" : "#1c1410";
     // 눈썹 (표정의 절반은 눈썹입니다)
     c.strokeStyle = brow; c.lineWidth = 1.5;
-    var tilt = { stern: 2.2, angry: 3, sly: -1, proud: -.6, eager: -1.4, happy: -1, calm: 0, scheme: 1.4 }[m] || 0;
+    var tilt = { stern: 2.2, angry: 3, sly: -1, proud: -.6, eager: -1.4, happy: -1, calm: 0, scheme: 1.4, smile: -.6 }[m] || 0;
     c.beginPath();
     c.moveTo(fx - ex - 3, ey - 6 - tilt); c.lineTo(fx - ex + 2.5, ey - 6 + tilt * .6);
     c.moveTo(fx + ex + 3, ey - 6 - tilt + (m === "sly" ? -1.6 : 0)); c.lineTo(fx + ex - 2.5, ey - 6 + tilt * .6);
@@ -249,7 +310,7 @@
       m = "open";
     }
     c.strokeStyle = "#7a3a2a"; c.lineWidth = 1.2; c.beginPath();
-    if (m === "happy" || m === "eager") { c.moveTo(fx - 2.6, my - .6); c.quadraticCurveTo(fx, my + 2.4, fx + 2.6, my - .6); }
+    if (m === "happy" || m === "eager" || m === "smile") { c.moveTo(fx - 2.6, my - .6); c.quadraticCurveTo(fx, my + 2.4, fx + 2.6, my - .6); }
     else if (m === "stern") { c.moveTo(fx - 2.4, my + .6); c.quadraticCurveTo(fx, my - .8, fx + 2.4, my + .6); }
     else if (m === "sly" || m === "proud" || m === "scheme") { c.moveTo(fx - 2, my); c.quadraticCurveTo(fx + 1, my + 1, fx + 3, my - 1.4); }
     else if (m !== "angry" && m !== "open") { c.moveTo(fx - 1.8, my); c.lineTo(fx + 1.8, my); }
@@ -276,6 +337,10 @@
     } else if (b === "mustache") {
       c.strokeStyle = col; c.lineWidth = 1; c.beginPath();
       c.moveTo(fx - 4.6, y + .4); c.quadraticCurveTo(fx - 2, y - 1.6, fx, y - .8); c.quadraticCurveTo(fx + 2, y - 1.6, fx + 4.6, y + .4); c.stroke();
+    } else if (b === "vandyke" || b === "vandykeLong") {                          // 콧수염 + 뾰족한 턱수염 (초상화 속 문관·승상)
+      var L = b === "vandykeLong" ? 12 : 7;
+      svg(c, "M" + (fx - 5.6) + "," + (y + 1.2) + " Q" + (fx - 2.6) + "," + (y - 2) + " " + fx + "," + (y - .9) + " Q" + (fx + 2.6) + "," + (y - 2) + " " + (fx + 5.6) + "," + (y + 1.2) + " Q" + (fx + 2.6) + "," + (y - .3) + " " + fx + "," + (y + .3) + " Q" + (fx - 2.6) + "," + (y - .3) + " " + (fx - 5.6) + "," + (y + 1.2) + " Z", col);
+      svg(c, "M" + (fx - 2.6) + "," + (y + 2.6) + " Q" + fx + "," + (y + 3.6) + " " + (fx + 2.6) + "," + (y + 2.6) + " L" + (fx + .6) + "," + (y + 2.6 + L) + " L" + (fx - .6) + "," + (y + 2.6 + L) + " Z", col);
     } else if (b === "stubble") {
       ell(c, fx, y + 2, 8.5, 4.6, "rgba(50,35,25,.28)");
     }
@@ -285,7 +350,20 @@
   function hat(c, sp, f, hy) {
     var k = sp.hat, b = -f * 1.6; // 모자 뒤쪽 장식은 얼굴 반대쪽으로 살짝
     c.save(); c.translate(0, hy);
-    if (k === "guan") {            // 관모(문관): 검은 모자 + 뒤로 솟은 판
+    if (k === "tall") {            // 높은 관 (제갈량·장완·비의·동윤·사마의)
+      tallHat(c, sp, f);
+    } else if (k === "crown") {    // 상투 + 작은 금관 (양의·마속)
+      ell(c, 0, -17, 5.6, 5, vol(c, "#2a201a", 0, -17, 6.5), OL, 1.1);
+      svg(c, "M-3.4,-19 L-4,-28 L4,-28 L3.4,-19 Z", vol(c, "#e0b64c", 0, -24, 5), OL, 1);
+      c.strokeStyle = "#b8862e"; c.lineWidth = 1.2; c.beginPath(); c.moveTo(-8, -21.5); c.lineTo(8, -21.5); c.stroke(); // 비녀
+    } else if (k === "topknot") {  // 맨 상투 (위연)
+      ell(c, 0, -17, 5.8, 5.2, vol(c, "#2a201a", 0, -17, 6.5), OL, 1.1);
+      c.fillStyle = "#c9a24a"; c.fillRect(-4.5, -15, 9, 2);
+    } else if (k === "hood") {     // 초록 두건 + 금 머리띠 (강유)
+      svg(c, "M-15.5,-1 Q-17,-21 0,-23 Q17,-21 15.5,-1 Q13,-8 0,-9 Q-13,-8 -15.5,-1 Z", vol(c, sp.hatCol, 0, -12, 17), OL, 1.1);
+      svg(c, "M-14.5,-6 Q0,-11 14.5,-6 L14.5,-2.8 Q0,-7.8 -14.5,-2.8 Z", vol(c, "#e0b64c", 0, -6, 14), OL, .8);
+      ell(c, f * 2, -7, 2.2, 2, vol(c, "#f3d06a", f * 2, -7, 2.5), OL, .7);
+    } else if (k === "guan") {     // 관모(문관): 검은 모자 + 뒤로 솟은 판
       svg(c, "M-13,-5 Q-13,-16 0,-17 Q13,-16 13,-5 Q0,-8 -13,-5 Z", vol(c, "#24242c", 0, -10, 14), OL, 1.1);
       svg(c, "M" + (b - 6) + ",-14 L" + (b - 4.5) + ",-27 L" + (b + 5.5) + ",-27 L" + (b + 7) + ",-14 Z", vol(c, "#24242c", b, -21, 10), OL, 1.1);
       c.strokeStyle = "#c9a24a"; c.lineWidth = .9; c.beginPath(); c.moveTo(b - 4.8, -24); c.lineTo(b + 5.8, -24); c.stroke();
@@ -298,11 +376,11 @@
       svg(c, "M" + (s * 8) + ",-10 Q" + (s * 18) + ",-4 " + (s * 16) + ",10 L" + (s * 12) + ",8 Q" + (s * 13) + ",-2 " + (s * 4) + ",-8 Z", "#1e1e24", OL, 1);
       ell(c, 0, -7, 15, 9.5, vol(c, "#26262e", 0, -7, 15), OL, 1.1);
     } else if (k === "helmet") {   // 투구(무장) + 술
-      svg(c, "M-15,-5 Q-15,-24 0,-26 Q15,-24 15,-5 L11,-6 Q11,-16 0,-17 Q-11,-16 -11,-6 Z", vol(c, sp.armor, 0, -16, 17), OL, 1.2);
+      svg(c, "M-15,-5 Q-15,-24 0,-26 Q15,-24 15,-5 L11,-6 Q11,-16 0,-17 Q-11,-16 -11,-6 Z", vol(c, sp.helm || sp.armor, 0, -16, 17), OL, 1.2);
       ell(c, -7, -20, 3.2, 1.8, "rgba(255,255,255,.5)");                                  // 투구 반짝임
       svg(c, "M-12,-17 Q0,-21 12,-17 L12,-14 Q0,-18 -12,-14 Z", vol(c, "#d9b24a", 0, -17, 12));
       c.strokeStyle = "#5a3a22"; c.lineWidth = 1.6; c.beginPath(); c.moveTo(0, -26); c.lineTo(0, -31); c.stroke();
-      svg(c, "M0,-31 Q" + (b * 4 - 7) + ",-40 " + (b * 5 - 3) + ",-44 Q" + (b * 2 + 4) + ",-38 2,-30 Z", sp.plume, OL, .9);
+      if (sp.plume) svg(c, "M0,-31 Q" + (b * 4 - 7) + ",-40 " + (b * 5 - 3) + ",-44 Q" + (b * 2 + 4) + ",-38 2,-30 Z", sp.plume, OL, .9);
     } else if (k === "band") {     // 강유: 상투 + 붉은 머리띠(끈이 뒤로 날림)
       var d = f ? -f : 1;
       ell(c, 0, -16, 5.2, 5, vol(c, "#2a201a", 0, -16, 6), OL, 1.1);
@@ -310,6 +388,34 @@
       svg(c, "M" + (d * 13) + ",-5 q" + (d * 7) + ",2 " + (d * 10) + ",9 l" + (-d * 3) + ",0 q" + (-d * 2) + ",-5 " + (-d * 7) + ",-7 Z", sp.band);
     }
     c.restore();
+  }
+
+  // 높은 관: 이마 위 금테 → 원통 → 윗부분(flat 각진·round 둥근·flare 넓게 퍼진 테)
+  function tallHat(c, sp, f) {
+    var col = sp.hatCol, y0 = -9, h = sp.top === "flare" ? 24 : sp.top === "flat" ? 24 : 21, y1 = y0 - h;
+    var w0 = 11.5, w1 = sp.top === "flare" ? 9.5 : sp.top === "flat" ? 12.5 : 9.5, ox = f * 1.5; // ox: 앞장식을 얼굴 쪽으로
+    var body = sp.top === "flat" ? "M-" + w0 + "," + y0 + " L-" + w1 + "," + y1 + " L" + w1 + "," + y1 + " L" + w0 + "," + y0 + " Q0," + (y0 - 3) + " -" + w0 + "," + y0 + " Z"
+      : "M-" + w0 + "," + y0 + " L-" + w1 + "," + (y1 + 5) + " Q0," + (y1 - 3) + " " + w1 + "," + (y1 + 5) + " L" + w0 + "," + y0 + " Q0," + (y0 - 3) + " -" + w0 + "," + y0 + " Z";
+    svg(c, body, vol(c, col, 0, (y0 + y1) / 2, h), OL, 1.2);
+    if (sp.ribs) {                                                                  // 비단을 접은 세로 골
+      c.strokeStyle = shade(col, .68); c.lineWidth = 1;
+      for (var i = -2; i <= 2; i++) { c.beginPath(); c.moveTo(i * 4.2, y0 - 3); c.lineTo(i * 3.8, y1 + 5); c.stroke(); }
+    }
+    if (sp.top === "flare") {                                                       // 승상의 관: 윗부분이 뒤로 둥글게 말린 모양
+      var bk = f ? -f : 1;
+      c.save(); c.translate(bk * 2.5, y1 + 3); c.rotate(-.28 * bk);
+      c.beginPath(); c.ellipse(0, 0, w1 + 3.5, 5.2, 0, 0, Math.PI * 2);
+      c.fillStyle = vol(c, shade(col, 1.1), 0, 0, w1 + 3); c.fill(); c.strokeStyle = OL; c.lineWidth = 1.1; c.stroke();
+      c.beginPath(); c.ellipse(bk * 3, .6, w1 - 1, 2.4, 0, 0, Math.PI * 2); c.fillStyle = shade(col, .66); c.fill(); // 말린 안쪽
+      c.restore();
+    }
+    if (sp.spiral) {                                                                // 장완의 관: 앞의 소용돌이 장식
+      c.strokeStyle = shade(col, 1.35); c.lineWidth = 1.7; c.beginPath();
+      for (var t = 0; t < 12.5; t += .25) { var r = 5.2 - t * .38; c.lineTo(ox + Math.cos(t) * r, y1 + 8 + Math.sin(t) * r); }
+      c.stroke();
+    }
+    svg(c, "M-" + w0 + "," + y0 + " Q0," + (y0 - 3) + " " + w0 + "," + y0 + " L" + (w0 - .4) + "," + (y0 - 3.6) + " Q0," + (y0 - 6.6) + " -" + (w0 - .4) + "," + (y0 - 3.6) + " Z", vol(c, "#e0b64c", 0, y0 - 2, w0), OL, .8); // 금테
+    if (sp.emblem) svg(c, "M" + ox + "," + (y0 - 10) + " L" + (ox + 3.4) + "," + (y0 - 6.2) + " L" + ox + "," + (y0 - 2.4) + " L" + (ox - 3.4) + "," + (y0 - 6.2) + " Z", vol(c, "#f3d06a", ox, y0 - 6, 4), OL, .8); // 금장식
   }
 
   /* ── 4. 배경: 대전 (한 번만 그려 bg 캔버스에 보관) ───────────
@@ -548,12 +654,13 @@
       c.fillStyle = sg; c.fillRect(-15, -15, 30, 30); c.restore();
       ell(c, o.x, o.y, 11, 3.6, "rgba(0,0,0,.35)");                                          // 발이 닿은 곳
       if (talk) ell(c, o.x, o.y, 17, 6, null, "rgba(255,210,100,.9)", 2);                     // 말하는 사람: 금빛 고리
-      c.save(); c.translate(o.x, o.y + bob + hop); c.scale(1.05, 1.05);
+      var sz = o.s.size || 1.05;                                                       // 승상은 조금 크게
+      c.save(); c.translate(o.x, o.y + bob + hop); c.scale(sz, sz);
       A = talk && !still ? { t: t, mouth: typing ? Math.abs(Math.sin(t * 11)) : 0 } : null;
       chibi(c, o.s, o.s.f);
       A = null;
       c.restore();
-      if (talk) dots(c, o.x, o.y + hop - 104, t);
+      if (talk) dots(c, o.x, o.y + hop - (o.s.bubble || 104), t);
     });
     people.forEach(function (o) { plate(c, o.n, o.x, o.y + 16, o.n === speaker, o.s.rival); });
   }
