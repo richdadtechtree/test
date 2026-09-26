@@ -92,21 +92,21 @@ python sangso.py            # 맥은 python3 sangso.py
 
 ---
 
-## 휴대폰·다른 PC에서 보기 (Cloudflare Pages + Access, 선택)
+## 휴대폰·다른 PC에서 보기 (Cloudflare Pages + 비밀번호 문, 선택)
 
-상소는 지금처럼 **내 컴퓨터에서 쓰고**, 완성된 화면만 **내 이메일로 로그인해야 열리는** 인터넷 주소에 올립니다.
+상소는 지금처럼 **내 컴퓨터에서 쓰고**, 완성된 화면만 **비밀번호를 넣어야 열리는** 인터넷 주소(`https://○○.pages.dev/`)에 올립니다.
+카드 등록이 필요한 Zero Trust 는 쓰지 않습니다.
 
-1. **Node.js(LTS)** 설치 — <https://nodejs.org> (올리기 도구 wrangler 를 쓰는 데 필요). 설치 후 창을 새로 열기.
-2. **Cloudflare 가입** 후 **계정 ID**와 **API 토큰**(권한: Account › Cloudflare Pages › Edit) 준비.
-3. `python sangso.py --publish-setup` — 계정 ID·토큰 입력 → 주소(`https://○○.pages.dev/`)가 생기고, 개인 내용 없는 '준비 중' 페이지만 올라갑니다.
-4. **Access(이메일 잠금) 켜기** — 프로젝트 Settings → *Enable access policy* → *Manage* → Access › Applications 에서 그 앱을 열어
-   *Public hostname* 의 Subdomain 칸의 `*` 를 지우고 저장(이래야 미리보기뿐 아니라 실제 주소도 잠김) → 정책에 내 이메일 허용.
-   (공식 문서: [Pages Known issues — Enable Access on your *.pages.dev domain](https://developers.cloudflare.com/pages/platform/known-issues/))
-5. `python sangso.py --publish` — 이제부터는 **상소를 쓸 때마다 자동으로** 올라갑니다.
+1. **Node.js(LTS)** 설치 — <https://nodejs.org> (올리기 도구 wrangler 에 필요). 설치 후 창을 새로 열기.
+2. **Cloudflare 가입**(이메일 인증까지) 후 **계정 ID**(대시보드 주소창의 32자리)와 **API 토큰**(Custom token, 권한 Account › Cloudflare Pages › Edit) 준비.
+3. `python sangso.py --publish-setup` — 계정 ID·토큰 입력 → 주소가 생기고 '준비 중' 페이지만 올라갑니다.
+4. `python sangso.py --publish-password` — 비밀번호(8자 이상)를 정하면 비밀번호 문을 먼저 세우고, 잠긴 것을 확인한 뒤 상소를 올립니다.
+   이후로는 **상소를 쓸 때마다 자동으로** 올라갑니다. 비밀번호를 바꿀 때도 같은 명령(바꾸면 모든 기기에서 다시 입력).
 
-안전장치: 올리기 직전마다 주소가 잠겼는지 직접 열어 확인하고, **잠겨 있지 않으면 올리지 않습니다.**
-올라가는 것은 `site/` 폴더(상소 화면·그림·목록)뿐이며 profile.md·대화 기록·원문 데이터·토큰은 올라가지 않습니다.
-토큰이 든 `cloudflare.json` 은 내 컴퓨터에만 두세요(git 제외).
+안전장치: 올리기 직전마다 주소를 로그인 없이 열어 보고, **잠겨 있지 않으면 올리지 않습니다.**
+비밀번호 원문은 어디에도 저장하지 않고 '소금+SHA-256' 값만 씁니다. 한 기기에서 한 번 들어가면 90일 동안 유지됩니다.
+올라가는 것은 `site/`(상소 화면·그림·목록)뿐이며 profile.md·대화 기록·원문 데이터·토큰은 올라가지 않습니다.
+토큰이 든 `cloudflare.json` 은 내 컴퓨터에만 두세요(git 제외). Cloudflare Access(이메일 잠금)로 잠가도 똑같이 동작합니다.
 
 ---
 
@@ -122,6 +122,7 @@ python sangso.py --new-art    # 조회 장면 배경을 그림으로 새로 뽑�
 python sangso.py --update     # GitHub의 최신 프로그램으로 새로 고친다 (내 기록·설정·그림은 그대로) + 지난 상소 다시 그림
 python sangso.py --check      # 점검: 화면 버전 + 인물마다 어떤 초상화 파일을 쓰는지 (그림이 안 바뀔 때)
 python sangso.py --publish-setup  # 처음 한 번: Cloudflare 올리기 설정
+python sangso.py --publish-password  # 비밀번호 문 만들기/바꾸기
 python sangso.py --publish    # 지금 바로 올리기 (설정 후엔 상소를 쓸 때마다 자동)
 ```
 

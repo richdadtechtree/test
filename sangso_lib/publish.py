@@ -17,6 +17,12 @@ site/ 에 들어가는 것 — 이것만 인터넷에 올라갑니다
 
 필요한 것: Node.js — wrangler 를 npx 로 실행합니다. https://nodejs.org 에서 'LTS' 설치 (처음 한 번)
 
+잠그는 방법 두 가지 (둘 중 하나)
+  • 비밀번호 문 (추천, 카드·Zero Trust 필요 없음): py sangso.py --publish-password 로 비밀번호를 정하면,
+    templates/gate_worker.js 를 site/_worker.js 로 넣어 올립니다. 비밀번호 대신 '소금+SHA-256 해시'만 들어갑니다.
+    한 번 들어가면 그 기기에서 90일 동안 다시 묻지 않습니다.
+  • Cloudflare Access (이메일 잠금): Zero Trust 요금제(무료라도 결제 정보 필요)를 켜야 합니다.
+
 안전장치 — 잠기지 않은 주소에는 개인 내용을 올리지 않습니다
   올리기 직전마다 주소를 한 번 열어 봅니다. 로그인 화면으로 넘어가면(=Access 로 잠김) 올리고,
   누구나 바로 볼 수 있는 상태면 올리지 않고 로그에 경고만 남깁니다.
@@ -37,10 +43,12 @@ import json
 import logging
 import os
 import re
+import hashlib
 import secrets
 import shutil
 import subprocess
 import tempfile
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -76,7 +84,15 @@ def load(base: Path) -> dict | None:
 # ──────────────────────────────────────────────────────────────
 # 1) 올릴 폴더(site/) 만들기
 # ──────────────────────────────────────────────────────────────
-def build_site(base: Path) -> Path:
+def _gate(base: Path, cfg: dict | None) -> str | None:
+    """비밀번호 문(_worker.js) 내용. 비밀번호를 정하지 않았으면 None."""
+    if not cfg or not cfg.get("pass_hash"):
+        return None
+    js = (base / "templates" / "gate_worker.js").read_text(encoding="utf-8")
+    return js.replace("__SALT__", cfg["pass_salt"]).replace("__HASH__", cfg["pass_hash"]).replace("__KEY__", cfg["pass_key"])
+
+
+def build_site(base: Path, cfg: dict | None = None) -> Path:
     out, site = base / "output", base / "site"
     pages = sorted(p for p in out.glob("*.html") if DATE_RE.match(p.stem))  # 날짜 이름인 것만 (견본·임시본 제외)
     if not pages:
@@ -104,8 +120,10 @@ def build_site(base: Path) -> Path:
     (site / "index.html").write_text(_INDEX.format(latest=latest), encoding="utf-8")
     rows = "\n".join(f'<li><a href="d/{p.name}"><b>{p.stem}</b> {html.escape(titles[p.stem])}</a></li>' for p in reversed(pages))
     (site / "list.html").write_text(_LIST.replace("{rows}", rows), encoding="utf-8")
-    # 검색엔진이 긁어 가지 않도록 (Access 로 잠그면 어차피 못 들어오지만 한 겹 더)
+    # 검색엔진이 긁어 가지 않도록 (잠겨 있으면 어차피 못 들어오지만 한 겹 더)
     (site / "robots.txt").write_text("User-agent: *\nDisallow: /\n", encoding="utf-8")
+    if (gate := _gate(base, cfg)):
+        (site / "_worker.js").write_text(gate, encoding="utf-8")  # 비밀번호 문 (방문자에게는 안 보이고 서버에서만 실행)
     return site
 
 
@@ -210,8 +228,22 @@ def deploy(base: Path, cfg: dict) -> str:
         (base / CFG_NAME).write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
     url = cfg["url"]
     if not is_protected(url):
-        raise PublishError(f"{url} 이 아직 잠겨 있지 않아 올리지 않았습니다. Cloudflare Access(이메일 잠금)를 먼저 켜 주세요.")
-    site = build_site(base)
+        gate = _gate(base, cfg)
+        if not gate:
+            raise PublishError(f"{url} 이 아직 잠겨 있지 않아 올리지 않았습니다. "
+                               "py sangso.py --publish-password 로 비밀번호 잠금을 켜 주세요.")
+        # 개인 내용 없는 '준비 중' 페이지 + 비밀번호 문을 먼저 올리고, 정말 잠겼는지 확인한 뒤에야 진짜 상소를 올립니다
+        with tempfile.TemporaryDirectory() as tmp:
+            Path(tmp, "index.html").write_text(_PLACEHOLDER, encoding="utf-8")
+            Path(tmp, "_worker.js").write_text(gate, encoding="utf-8")
+            _upload(cfg, Path(tmp))
+        for _ in range(12):  # 새 배포가 퍼지는 데 몇 초 걸립니다 (최대 1분 기다림)
+            time.sleep(5)
+            if is_protected(url):
+                break
+        else:
+            raise PublishError(f"비밀번호 문을 세웠지만 {url} 이 아직 열려 있어 상소는 올리지 않았습니다. 잠시 뒤 다시 실행해 주세요.")
+    site = build_site(base, cfg)
     _upload(cfg, site)
     log.info("올리기 완료: %s", url)
     return url
@@ -231,6 +263,53 @@ def publish_if_configured(base: Path) -> None:
 # ──────────────────────────────────────────────────────────────
 # 3) 처음 한 번: 설정 도우미  (py sangso.py --publish-setup)
 # ──────────────────────────────────────────────────────────────
+_PLACEHOLDER = '<!DOCTYPE html><meta charset="utf-8"><meta name="robots" content="noindex"><title>준비 중</title><p>준비 중입니다.</p>'
+
+
+def _fail_closed(cfg: dict) -> None:
+    """무료 사용량(하루 10만 번)을 넘기는 드문 경우에도 비밀번호 문 없이 열리지 않도록 'fail closed' 로 바꿔 둡니다. (실패해도 무시)"""
+    body = json.dumps({"deployment_configs": {"production": {"fail_open": False}, "preview": {"fail_open": False}}}).encode()
+    req = urllib.request.Request(
+        f"https://api.cloudflare.com/client/v4/accounts/{cfg['account_id']}/pages/projects/{cfg['project']}",
+        data=body, method="PATCH",
+        headers={"Authorization": f"Bearer {cfg['api_token']}", "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            log.info("fail closed 설정: %s", r.status)
+    except (OSError, urllib.error.HTTPError) as e:
+        log.warning("fail closed 설정 실패(무시하고 계속): %s", e)
+
+
+def set_password(base: Path) -> int:
+    """py sangso.py --publish-password — 비밀번호를 정하고 바로 잠근 뒤 올립니다."""
+    cfg = load(base)
+    if not cfg:
+        print("먼저  py sangso.py --publish-setup  을 실행하세요.")
+        return 1
+    print("\n=== 비밀번호 정하기 ===  (입력해도 화면에 안 보이는 게 정상입니다)")
+    pw = getpass.getpass("새 비밀번호 (8자 이상): ")
+    if len(pw) < 8:
+        print("✗ 8자 이상으로 정해 주세요. (길수록 안전합니다)")
+        return 1
+    if getpass.getpass("한 번 더: ") != pw:
+        print("✗ 두 번 넣은 비밀번호가 다릅니다. 다시 실행해 주세요.")
+        return 1
+    salt = secrets.token_hex(16)
+    cfg.update(pass_salt=salt, pass_hash=hashlib.sha256((salt + pw).encode("utf-8")).hexdigest(),
+               pass_key=secrets.token_hex(32))  # 비밀번호가 바뀌면 출입증 서명 열쇠도 바꿔서 옛 출입증을 무효로
+    (base / CFG_NAME).write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
+    print("✓ 비밀번호를 저장했습니다 (비밀번호 자체가 아니라 섞은 값만 저장)")
+    _fail_closed(cfg)
+    print("비밀번호 문을 세우고 상소를 올리는 중… (1~2분)")
+    try:
+        url = deploy(base, cfg)
+    except PublishError as e:
+        print("✗", e)
+        return 1
+    print(f"\n✓ 완료! 휴대폰에서 {url} 을 열고 비밀번호를 넣으세요. (그 기기에서는 90일 동안 다시 안 물어봅니다)")
+    return 0
+
+
 def setup(base: Path) -> int:
     print("\n=== Cloudflare 올리기 설정 ===")
     try:
@@ -284,6 +363,6 @@ def setup(base: Path) -> int:
             print("✗", e)
             return 1
     print(f"\n✓ 주소가 생겼습니다 → {cfg['url']}")
-    print("다음 순서: 안내대로 Cloudflare Access(이메일 잠금)를 켠 뒤  py sangso.py --publish  를 실행하세요.")
+    print("다음 순서:  py sangso.py --publish-password  로 비밀번호를 정하면 잠그고 올립니다.")
     print("(잠기기 전에는 개인 내용을 올리지 않습니다)")
     return 0

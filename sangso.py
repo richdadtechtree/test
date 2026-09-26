@@ -14,6 +14,7 @@
   python sangso.py --check      점검: 화면 버전과, 인물마다 어떤 초상화 파일을 쓰는지 보여 줍니다
   python sangso.py --publish-setup   처음 한 번: Cloudflare 에 올릴 준비 (계정 ID·토큰 입력)
   python sangso.py --publish    지금 바로 Cloudflare 에 올립니다 (설정 후에는 상소를 쓸 때마다 자동)
+  python sangso.py --publish-password   비밀번호 문 만들기/바꾸기 (카드·Zero Trust 필요 없음)
 
 문제가 생기면 logs/sangso.log 를 먼저 열어 보세요. 무엇이 어디서 실패했는지 적혀 있습니다.
 """
@@ -121,6 +122,7 @@ def main() -> int:
     ap.add_argument("--redraw", action="store_true", help="지난 상소들을 새 디자인으로 다시 그린다")
     ap.add_argument("--publish-setup", action="store_true", help="처음 한 번: Cloudflare 올리기 설정")
     ap.add_argument("--publish", action="store_true", help="지금 바로 Cloudflare 에 올린다")
+    ap.add_argument("--publish-password", action="store_true", help="비밀번호 문 만들기/바꾸기")
     ap.add_argument("--check", action="store_true", help="점검: 화면 버전과 인물별 초상화 파일을 보여 준다")
     ap.add_argument("--update", action="store_true", help="GitHub의 최신 프로그램으로 새로 고친다 (내 기록·설정·그림은 그대로)")
     ap.add_argument("--new-art", action="store_true", help="조회 장면 배경을 그림으로 새로 뽑는다 (art_seed를 바꿔서). 기본은 코드로 그린 SD 캐릭터 장면")
@@ -133,10 +135,12 @@ def main() -> int:
         print("초상화 (assets/portraits 폴더):")
         print(art.report(BASE / "assets"))
         return 0
-    if args.publish_setup or args.publish:
+    if args.publish_setup or args.publish or args.publish_password:
         from sangso_lib import publish
         if args.publish_setup:
             return publish.setup(BASE)
+        if args.publish_password:
+            return publish.set_password(BASE)
         cfg_p = publish.load(BASE)
         if not cfg_p:
             print("올리기 설정이 없습니다. 먼저  py sangso.py --publish-setup  을 실행하세요.")
