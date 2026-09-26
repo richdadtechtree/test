@@ -4,6 +4,9 @@ data/
 output/
 archive/
 logs/
+# Cloudflare 올리기: 비밀번호(토큰)가 든 설정과 올릴 폴더 — 절대 git 에 올리지 않음
+cloudflare.json
+site/
 __pycache__/
 *.pyc
 

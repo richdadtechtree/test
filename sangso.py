@@ -12,6 +12,8 @@
   python sangso.py --new-art    조회 장면 배경을 그림(무료 이미지 서비스)으로 새로 뽑고, 지난 상소에도 적용합니다
   python sangso.py --update     GitHub의 최신 프로그램으로 새로 고치고, 지난 상소에도 적용합니다 (내 기록은 그대로)
   python sangso.py --check      점검: 화면 버전과, 인물마다 어떤 초상화 파일을 쓰는지 보여 줍니다
+  python sangso.py --publish-setup   처음 한 번: Cloudflare 에 올릴 준비 (계정 ID·토큰 입력)
+  python sangso.py --publish    지금 바로 Cloudflare 에 올립니다 (설정 후에는 상소를 쓸 때마다 자동)
 
 문제가 생기면 logs/sangso.log 를 먼저 열어 보세요. 무엇이 어디서 실패했는지 적혀 있습니다.
 """
@@ -117,6 +119,8 @@ def main() -> int:
     ap.add_argument("--sample", action="store_true", help="견본 상소를 띄운다")
     ap.add_argument("--no-open", action="store_true", help="창을 띄우지 않는다")
     ap.add_argument("--redraw", action="store_true", help="지난 상소들을 새 디자인으로 다시 그린다")
+    ap.add_argument("--publish-setup", action="store_true", help="처음 한 번: Cloudflare 올리기 설정")
+    ap.add_argument("--publish", action="store_true", help="지금 바로 Cloudflare 에 올린다")
     ap.add_argument("--check", action="store_true", help="점검: 화면 버전과 인물별 초상화 파일을 보여 준다")
     ap.add_argument("--update", action="store_true", help="GitHub의 최신 프로그램으로 새로 고친다 (내 기록·설정·그림은 그대로)")
     ap.add_argument("--new-art", action="store_true", help="조회 장면 배경을 그림으로 새로 뽑는다 (art_seed를 바꿔서). 기본은 코드로 그린 SD 캐릭터 장면")
@@ -129,6 +133,20 @@ def main() -> int:
         print("초상화 (assets/portraits 폴더):")
         print(art.report(BASE / "assets"))
         return 0
+    if args.publish_setup or args.publish:
+        from sangso_lib import publish
+        if args.publish_setup:
+            return publish.setup(BASE)
+        cfg_p = publish.load(BASE)
+        if not cfg_p:
+            print("올리기 설정이 없습니다. 먼저  py sangso.py --publish-setup  을 실행하세요.")
+            return 1
+        try:
+            print("✓ 올렸습니다 →", publish.deploy(BASE, cfg_p))
+            return 0
+        except publish.PublishError as e:
+            print("✗", e)
+            return 1
     if args.update:
         from sangso_lib import update
         try:
@@ -149,6 +167,7 @@ def main() -> int:
     CFG.update(cfg)
     today = date.today()
     today_html = OUT / f"{today.isoformat()}.html"
+    opened_existing = False  # 이미 있던 오늘 상소를 그냥 여는 경우엔 다시 올리지 않습니다
 
     # 조회 장면 그림: 없으면 처음 한 번 받아 둡니다 (실패해도 코드 그림으로 계속 진행)
     if args.new_art:
@@ -171,6 +190,7 @@ def main() -> int:
                              "견본", notice="견본 상소입니다. 실제 상소는 python sangso.py 로 쓰게 하십시오.",
                              filename="sample.html")
     elif today_html.exists() and not args.force:
+        opened_existing = True
         # 이미 쓴 글은 그대로 두고, 화면만 지금 프로그램(템플릿·그림)으로 다시 그려서 엽니다.
         # 그래야 업데이트한 뒤 옛 화면이 뜨는 일이 없습니다. (Claude 호출 없음, 1초 안쪽)
         src = ARCHIVE / f"{today.isoformat()}.json"
@@ -190,6 +210,9 @@ def main() -> int:
                                  filename="_fallback.html")  # 오늘 파일로 저장하지 않아야 다음 실행 때 다시 시도합니다
 
     log.info("상소 파일: %s", page)
+    if page == today_html and (args.redraw or args.force or not opened_existing):
+        from sangso_lib import publish
+        publish.publish_if_configured(BASE)   # cloudflare.json 이 있을 때만 (휴대폰·다른 PC용)
     if args.scheduled:
         wait_until(cfg.get("show_at", "07:00"))
     if not args.no_open:
