@@ -183,6 +183,18 @@ def is_protected(url: str) -> bool:
         raise PublishError(f"주소가 잠겼는지 확인하지 못했습니다 ({url}): {e}") from e
 
 
+def real_url(cfg: dict) -> str | None:
+    """Cloudflare 에 '이 프로젝트의 진짜 주소'를 물어봅니다 (이름이 겹치면 sangso-abc.pages.dev 처럼 달라지므로 짐작하지 않음)."""
+    text = _wrangler(cfg, "pages", "project", "list")
+    for line in text.splitlines():
+        cells = [c.strip() for c in line.split("│" if "│" in line else "|")]
+        if cfg["project"] in cells:  # 표에서 이 프로젝트 줄만
+            m = re.search(r"([\w-]+\.pages\.dev)", line)
+            if m:
+                return f"https://{m.group(1)}/"
+    return None
+
+
 def _upload(cfg: dict, site: Path) -> str:
     text = _wrangler(cfg, "pages", "deploy", str(site), f"--project-name={cfg['project']}", "--branch=main")
     urls = re.findall(r"https://[\w.-]+\.pages\.dev\S*", text)
@@ -190,7 +202,13 @@ def _upload(cfg: dict, site: Path) -> str:
 
 
 def deploy(base: Path, cfg: dict) -> str:
-    url = cfg.get("url") or f"https://{cfg['project']}.pages.dev/"
+    if not cfg.get("url_checked"):  # 처음 한 번: 저장된 주소가 진짜 이 프로젝트의 주소인지 Cloudflare 에 확인
+        url = real_url(cfg)
+        if not url:
+            raise PublishError(f"'{cfg['project']}' 프로젝트의 주소를 확인하지 못해 올리지 않았습니다.")
+        cfg["url"], cfg["url_checked"] = url, True
+        (base / CFG_NAME).write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
+    url = cfg["url"]
     if not is_protected(url):
         raise PublishError(f"{url} 이 아직 잠겨 있지 않아 올리지 않았습니다. Cloudflare Access(이메일 잠금)를 먼저 켜 주세요.")
     site = build_site(base)
@@ -244,7 +262,13 @@ def setup(base: Path) -> int:
         if "already exists" not in str(e).lower():  # 이미 만든 프로젝트면 그대로 씁니다
             print("✗", e)
             return 1
-    cfg["url"] = cfg["url"] or f"https://{proj}.pages.dev/"
+    try:
+        cfg["url"] = real_url(cfg) or cfg["url"]  # 진짜 주소를 확인해서 저장 (잠금 확인을 엉뚱한 주소에 하지 않도록)
+    except PublishError as e:
+        log.warning("프로젝트 주소 확인 실패: %s", e)
+    if not cfg["url"]:
+        print(f"✗ '{proj}' 프로젝트의 주소를 확인하지 못했습니다. 잠시 뒤 다시 실행해 주세요.")
+        return 1
     (base / CFG_NAME).write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"✓ 설정 저장: {base / CFG_NAME}  (이 파일은 내 컴퓨터에만 두세요)")
 
