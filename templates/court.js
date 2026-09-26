@@ -4,6 +4,7 @@
  * 화면 구성
  *   ① 캔버스: 대각선 위에서 내려다본 대전(쿼터뷰). 단상 위 제갈량, 비스듬히 뻗은 붉은 융단 양옆에 한 줄씩 장수 9명.
  *      위쪽 줄 = 문관(장완·비의·동윤·양의·마속), 아래쪽 줄 = 무장(조운·위연·강유·왕평).
+ *      왼쪽 앞 창가에는 적국 위(魏)의 사마의가 홀로 서서, 조회 마지막에 승상과 반대되는 조언을 던집니다.
  *   ② 아래 대화창: 말하는 사람의 초상화 + 이름 + 대사. 승상 → 신하들 순서로 차례로 말합니다.
  *      말하는 캐릭터는 머리 위에 '…' 말풍선이 뜨고 통통 튑니다. 대화창을 눌러야 다음 대사로 넘어갑니다.
  *
@@ -30,7 +31,7 @@
    * robe: 옷 색 / trim: 깃·단 색 / armor: 갑옷 색(무장만) / hat: guanjin(윤건)·guan(관모)·scarf(복건)·helmet(투구)·band(머리띠)
    * beard: long·grey·full·short·goatee·mustache·stubble·none / mood: 표정 / hold: 든 물건
    * x, y: 서 있는 바닥 칸 (아래 '쿼터뷰 좌표' 참고) / f: 바라보는 쪽 (-1 화면 왼쪽, 1 오른쪽)
-   * 붉은 융단(y = 4.5~6.5)이 단상에서 화면 오른쪽 아래로 비스듬히 뻗고, 그 양옆에 한 줄씩 섭니다.
+   * 붉은 융단(y = 4.5~6.5)이 단상에서 화면 오른쪽 아래로 비스듬히 뻗고, 그 양옆에 한 줄씩 섭니다. 사마의는 신하들과 떨어져 왼쪽 앞 창가에 홀로.
    *   위쪽 줄(y = 3.6) 문관 5명, 아래쪽 줄(y = 7.4) 무장 4명. 단상에 가까울수록 윗자리, x 가 1.6씩 늘며 뒤로.
    *   (아래쪽 줄은 화면 앞이라 단상과 겹치지 않도록 반 칸 뒤에서 시작합니다)
    *   신하들은 모두 단상의 승상 쪽(화면 왼쪽 위)을 바라보고, 승상은 신하들 쪽(오른쪽 아래)을 봅니다. */
@@ -45,6 +46,8 @@
     "위연": { hj: "魏延", robe: "#5a1d15", armor: "#9a3526", hat: "helmet", plume: "#221a18", beard: "full", mood: "angry", hold: "glaive", x: 7.6, y: 7.4, f: -1, skin: "#e0ab7f" },
     "강유": { hj: "姜維", robe: "#2f4f8f", armor: "#9fb2cc", hat: "band", band: "#cc3328", beard: "none", mood: "eager", hold: "spear", x: 9.2, y: 7.4, f: -1 },
     "왕평": { hj: "王平", robe: "#4c3b2a", armor: "#86663f", hat: "helmet", plume: "#9b3b2a", beard: "stubble", mood: "calm", hold: "sword", x: 10.8, y: 7.4, f: -1 },
+    // 적국 위(魏)의 맞수. 촉의 신하들과 떨어져 왼쪽 앞 창가(햇빛 드는 곳)에 홀로 서서 승상을 바라봅니다. 조회 마지막에 반대 의견을 던집니다
+    "사마의": { hj: "司馬懿", robe: "#4a3c6e", trim: "#d8d0c0", cape: "#b9b4ac", hat: "guan", beard: "goatee", mood: "scheme", hold: "crossed", x: 4.0, y: 10.0, f: 1, rival: true },
   };
   var OL = "#2a1a12"; // 캐릭터 외곽선 색
 
@@ -186,6 +189,12 @@
       c.restore();
       var gy = A ? -5 + wave(5, 2.2) : 0;                                         // 말할 때 한 손을 들어 손짓
       ell(c, 11 * side, -16 + gy, 3.2, 3, vol(c, skin, 11 * side, -16 + gy, 4.2), OL, 1); ell(c, -11 * side, -16, 3.2, 3, vol(c, skin, -11 * side, -16, 4.2), OL, 1);
+    } else if (h === "crossed") {              // 사마의: 팔짱 (말할 때 팔을 살짝 들썩)
+      var cy = -Math.abs(wave(2.4, 1.6));
+      svg(c, "M-13," + (-25 + cy) + " Q0," + (-28 + cy) + " 13," + (-25 + cy) + " L13," + (-17 + cy) + " Q0," + (-14 + cy) + " -13," + (-17 + cy) + " Z", vol(c, sp.robe, 0, -21 + cy, 14), OL, 1.2);
+      c.strokeStyle = shade(sp.robe, .6); c.lineWidth = 1; c.beginPath(); c.moveTo(-9, -21 + cy); c.quadraticCurveTo(0, -18.5 + cy, 9, -21 + cy); c.stroke(); // 팔이 겹친 주름
+      svg(c, "M-13," + (-25 + cy) + " L-9," + (-25.6 + cy) + " L-9," + (-16.6 + cy) + " L-13," + (-17 + cy) + " Z", sp.trim);   // 소매 끝단
+      svg(c, "M13," + (-25 + cy) + " L9," + (-25.6 + cy) + " L9," + (-16.6 + cy) + " L13," + (-17 + cy) + " Z", sp.trim);
     } else {                                   // 창·언월도를 쥔 손
       ell(c, 16 * side, -24, 3.4, 3.2, vol(c, skin, 16 * side, -24, 4.4), OL, 1);
       var hy2 = A ? -6 + wave(5, 2.4) : 0;                                        // 말할 때 빈손을 들어 손짓
@@ -211,7 +220,7 @@
     var ex = 5.2, ey = hy + 4, brow = sp.hair && sp.beard === "grey" ? "#6f6a64" : "#1c1410";
     // 눈썹 (표정의 절반은 눈썹입니다)
     c.strokeStyle = brow; c.lineWidth = 1.5;
-    var tilt = { stern: 2.2, angry: 3, sly: -1, proud: -.6, eager: -1.4, happy: -1, calm: 0 }[m] || 0;
+    var tilt = { stern: 2.2, angry: 3, sly: -1, proud: -.6, eager: -1.4, happy: -1, calm: 0, scheme: 1.4 }[m] || 0;
     c.beginPath();
     c.moveTo(fx - ex - 3, ey - 6 - tilt); c.lineTo(fx - ex + 2.5, ey - 6 + tilt * .6);
     c.moveTo(fx + ex + 3, ey - 6 - tilt + (m === "sly" ? -1.6 : 0)); c.lineTo(fx + ex - 2.5, ey - 6 + tilt * .6);
@@ -220,7 +229,7 @@
     c.fillStyle = "#1d1410"; c.strokeStyle = "#1d1410"; c.lineWidth = 1.5;
     if (m === "happy") {                        // 웃는 눈 ^ ^
       [-ex, ex].forEach(function (x) { c.beginPath(); c.moveTo(fx + x - 2.4, ey + 1); c.quadraticCurveTo(fx + x, ey - 2.4, fx + x + 2.4, ey + 1); c.stroke(); });
-    } else if (m === "sly" || m === "proud") {  // 가늘게 뜬 눈
+    } else if (m === "sly" || m === "proud" || m === "scheme") {  // 가늘게 뜬 눈
       [-ex, ex].forEach(function (x) { ell(c, fx + x, ey + .5, 2.4, 1.3, "#1d1410"); });
       c.lineWidth = 1.2; [-ex, ex].forEach(function (x) { c.beginPath(); c.moveTo(fx + x - 2.8, ey - .8); c.lineTo(fx + x + 2.8, ey - .8); c.stroke(); });
     } else {
@@ -242,7 +251,7 @@
     c.strokeStyle = "#7a3a2a"; c.lineWidth = 1.2; c.beginPath();
     if (m === "happy" || m === "eager") { c.moveTo(fx - 2.6, my - .6); c.quadraticCurveTo(fx, my + 2.4, fx + 2.6, my - .6); }
     else if (m === "stern") { c.moveTo(fx - 2.4, my + .6); c.quadraticCurveTo(fx, my - .8, fx + 2.4, my + .6); }
-    else if (m === "sly" || m === "proud") { c.moveTo(fx - 2, my); c.quadraticCurveTo(fx + 1, my + 1, fx + 3, my - 1.4); }
+    else if (m === "sly" || m === "proud" || m === "scheme") { c.moveTo(fx - 2, my); c.quadraticCurveTo(fx + 1, my + 1, fx + 3, my - 1.4); }
     else if (m !== "angry" && m !== "open") { c.moveTo(fx - 1.8, my); c.lineTo(fx + 1.8, my); }
     c.stroke();
     beard(c, sp.beard, fx, ey, sp.hair);
@@ -546,15 +555,15 @@
       c.restore();
       if (talk) dots(c, o.x, o.y + hop - 104, t);
     });
-    people.forEach(function (o) { plate(c, o.n, o.x, o.y + 16, o.n === speaker); });
+    people.forEach(function (o) { plate(c, o.n, o.x, o.y + 16, o.n === speaker, o.s.rival); });
   }
   // 이름표
-  function plate(c, n, x, y, on) {
+  function plate(c, n, x, y, on, rival) {
     c.font = "700 11px 'Gowun Batang', 'Noto Serif KR', serif"; c.textAlign = "center"; c.textBaseline = "middle";
     var w = c.measureText(n).width + 12;
     rrect(c, x - w / 2, y - 8, w, 16, 4);
-    c.fillStyle = on ? "rgba(232,190,90,.95)" : "rgba(20,12,8,.72)"; c.fill();
-    c.strokeStyle = on ? "#5a3a14" : "rgba(201,162,74,.6)"; c.lineWidth = 1; c.stroke();
+    c.fillStyle = on ? "rgba(232,190,90,.95)" : rival ? "rgba(58,32,88,.9)" : "rgba(20,12,8,.72)"; c.fill(); // 맞수(사마의)는 보랏빛
+    c.strokeStyle = on ? "#5a3a14" : rival ? "rgba(190,160,230,.7)" : "rgba(201,162,74,.6)"; c.lineWidth = 1; c.stroke();
     c.fillStyle = on ? "#2a1a0a" : "#f3e6c8"; c.fillText(n, x, y + .5);
   }
   // 말하는 중 '…' 말풍선
@@ -592,7 +601,8 @@
       tNext = document.getElementById("talk-next"),
       tStep = document.getElementById("talk-step");
   var LINES = [{ who: "제갈량", text: DATA.saying || (tText ? tText.textContent : ""), src: DATA.event || "" }]
-    .concat((DATA.replies || []).map(function (r) { return { who: r.who || "신하", text: r.text || "" }; }));
+    .concat((DATA.replies || []).map(function (r) { return { who: r.who || "신하", text: r.text || "" }; }))
+    .concat(DATA.rival ? [{ who: "사마의", text: DATA.rival, tag: "맞수의 한마디" }] : []); // 조회의 마지막: 적국 위의 사마의가 반대편에서 한마디
   var PORTRAITS = DATA.portraits || {};
   var idx = 0, pos = 0, timer = null;
 
@@ -619,7 +629,8 @@
     if (tName) {
       tName.appendChild(document.createTextNode(L.who));
       if (sp && sp.hj) { var s = document.createElement("span"); s.textContent = sp.hj; tName.appendChild(s); }
-      if (i === 0) { var s2 = document.createElement("em"); s2.textContent = "오늘의 한마디"; tName.appendChild(s2); }
+      var tag = i === 0 ? "오늘의 한마디" : L.tag;
+      if (tag) { var s2 = document.createElement("em"); s2.textContent = tag; if (sp && sp.rival) s2.className = "rival"; tName.appendChild(s2); }
     }
     if (tSrc) tSrc.textContent = L.src ? "— 근거: " + L.src : "";
     if (tStep) tStep.textContent = (i + 1) + " / " + LINES.length;

@@ -54,7 +54,7 @@ PORTRAIT_BASE = (
     "premium historical strategy game character art, detailed digital painting, soft rim light, "
     "dark warm brown background, facing the viewer, no text, no watermark"
 )
-# 고른 시드: 장완 12, 비의 12, 동윤 13, 양의 13, 강유 1, 위연 2, 마속 1, 조운 2, 왕평 2, 제갈량(PORTRAIT_PROMPT) 1
+# 고른 시드: 장완 12, 비의 12, 동윤 13, 양의 13, 강유 1, 위연 2, 마속 1, 조운 2, 왕평 2, 사마의 11, 제갈량(PORTRAIT_PROMPT) 1
 # ('official hat' 이라고 쓰면 현대식 모자가 나와서, 문관은 상투 + 작은 관으로 풀어 썼습니다)
 GENERALS = {
     "jiang_wan": "Jiang Wan, calm steady middle-aged ancient Chinese civil minister, gentle reliable face, short neat black beard, hair in a topknot under a small black gauze Han dynasty crown, no brim, deep green hanfu robe with cross collar",
@@ -65,12 +65,14 @@ GENERALS = {
     "yang_yi": "Yang Yi, fussy sharp-eyed thin middle-aged ancient Chinese court secretary man, narrow suspicious eyes, thin pointed goatee beard, hair in a topknot under a small black gauze Han dynasty crown, no brim, grey brown hanfu robe with cross collar",
     "ma_su": "Ma Su, confident young Chinese strategist scholar, proud smirk, clean shaven, black scholar headscarf, teal Han dynasty robe, holding a scroll",
     "zhao_yun": "Zhao Yun, loyal quiet handsome Chinese general, calm resolute face, white silver armor, white cape, silver helmet with white plume",
+    "sima_yi": "Sima Yi, cunning calculating middle-aged ancient Chinese Wei dynasty strategist, cold sharp narrow eyes, faint smirk, thin mustache and pointed goatee, hair in a topknot under a small black gauze Han dynasty crown, no brim, dark purple hanfu robe with cross collar and a grey cape, arms crossed",
     "wang_ping": "Wang Ping, practical weathered veteran Chinese soldier general, rugged face, short stubble beard, brown leather and iron armor, simple helmet",
 }
 # 한글 이름 → 초상화 파일 이름 (윈도우에서도 탈 없도록 파일 이름은 영문)
 CAST_IDS = {
     "제갈량": "zhuge_liang", "장완": "jiang_wan", "비의": "fei_yi", "동윤": "dong_yun", "양의": "yang_yi",
     "마속": "ma_su", "강유": "jiang_wei", "조운": "zhao_yun", "위연": "wei_yan", "왕평": "wang_ping",
+    "사마의": "sima_yi",
 }
 PORTRAIT_PROMPT = (
     "Masterpiece character portrait, bust shot of Zhuge Liang the legendary Three Kingdoms strategist, "

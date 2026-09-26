@@ -25,6 +25,9 @@ from .engine import count_chars
 
 log = logging.getLogger("sangso")
 
+# 화면(템플릿·court.js) 버전. 화면 오른쪽 아래에 작게 보입니다 → "내 화면이 최신인가?"를 확인하는 용도
+UI_VERSION = "2026.09.26"
+
 STEMS, BRANCHES = "甲乙丙丁戊己庚辛壬癸", "子丑寅卯辰巳午未申酉戌亥"
 
 
@@ -71,7 +74,10 @@ def render(data: dict, day: date, out_dir: Path, template: Path, engine_label: s
         {"who": "비의", "text": "주공께서 들으시면 분명 웃으실 것이옵니다."},
         {"who": "강유", "text": "소장, 오늘도 한 걸음 나아가겠나이다!"},
     ]
-    court = {"saying": one_liner, "idiom": idiom, "replies": replies, "event": c.get("event", "")}
+    # 사마의의 반론 (이 기능 이전의 상소에는 없으므로, 없으면 사마의는 장면에 서 있기만 합니다)
+    rival = c.get("rival") if isinstance(c.get("rival"), dict) else {"text": c.get("rival") or ""}
+    court = {"saying": one_liner, "idiom": idiom, "replies": replies, "event": c.get("event", ""),
+             "rival": str(rival.get("text") or "").strip()}
 
     # 그림 파일이 있으면 코드 그림 대신 사용합니다 (art.py 참고). ?v=… 는 그림을 바꿨을 때 브라우저가 옛 그림을 쓰지 않게 합니다
     def url(f: Path | None) -> str:
@@ -112,6 +118,7 @@ def render(data: dict, day: date, out_dir: Path, template: Path, engine_label: s
         court_script=court_script,
         court_img=court_img, portrait_img=portrait_img,
         court_mode="has-art" if court_img else "no-art",
+        ui_version=UI_VERSION,
         prev_href=f"{prev[-1]}.html" if prev else "#", prev_class="" if prev else "off",
         next_href=f"{nxt[0]}.html" if nxt else "#", next_class="" if nxt else "off",
     )

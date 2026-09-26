@@ -233,6 +233,7 @@ body.vertical .notice { margin: 0 0 0 24px; }
 .talk-name { font-weight: 700; color: #f3d06a; font-size: clamp(13px, 1.6vw, 17px); letter-spacing: .06em; }
 .talk-name span { font-family: var(--hanja); font-weight: 500; color: rgba(243,208,106,.7); margin-left: 6px; font-size: .85em; }
 .talk-name em { font-style: normal; font-weight: 400; color: #b9c2e0; margin-left: 10px; font-size: .78em; letter-spacing: .02em; }
+.talk-name em.rival { color: #cdb6f0; } /* 사마의(맞수)의 꼬리표는 보랏빛 */
 .talk-text { margin: 4px 0 0; font-size: clamp(12.5px, 1.65vw, 17px); line-height: 1.6; word-break: keep-all; text-indent: 0; min-height: 3.2em; }
 .talk-src { margin-top: auto; padding-top: 4px; font-size: clamp(9.5px, 1.05vw, 11.5px); color: #9aa3c4; }
 .talk-src:empty { display: none; }
@@ -246,6 +247,7 @@ body.vertical .notice { margin: 0 0 0 24px; }
   background: rgba(20,11,7,.8); border: 1px solid rgba(201,162,74,.7); box-shadow: 0 4px 12px rgba(0,0,0,.4); }
 .court-ctl button.gold { color: #1d120a; font-weight: 700; background: linear-gradient(180deg, #f3d98a, #c9a24a); border-color: #7a5a1e; }
 .court-ctl button:hover { filter: brightness(1.1); }
+.court-ver { align-self: center; font-size: 10.5px; color: rgba(243,230,200,.55); letter-spacing: .04em; }
 @media (prefers-reduced-motion: reduce) { .talk, .idiom { animation: none; opacity: 1; } .talk.done .talk-next { animation: none; } }
 @media (max-width: 640px) {
   .court { margin: 0 -8px 26px; padding: 4px; }
@@ -299,6 +301,7 @@ body.vertical .notice { margin: 0 0 0 24px; }
     <div class="court-ctl">
       <button type="button" id="court-replay">↻ 다시 보기</button>
       <button type="button" id="court-go" class="gold">오늘의 상소 펼치기 ▾</button>
+      <span class="court-ver" title="화면 버전 — 업데이트가 됐는지 확인할 때 보세요">v$ui_version</span>
     </div>
     <!-- 대화창 (조조전처럼 아래에 초상화 + 이름 + 대사). court.js 가 승상 → 신하 순서로 바꿔 가며 보여 줍니다.
          누르면 다음 대사로 넘어갑니다. -->

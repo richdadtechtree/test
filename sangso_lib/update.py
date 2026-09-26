@@ -1,4 +1,4 @@
-"""
+r"""
 update.py — GitHub에 올라온 최신 프로그램으로 이 폴더를 새로 고치는 곳  (python sangso.py --update)
 
 하는 일
@@ -9,6 +9,10 @@ update.py — GitHub에 올라온 최신 프로그램으로 이 폴더를 새로
 절대 건드리지 않는 것 (내 기록·내 그림)
   profile.md, data/, output/, archive/, logs/, assets/ 안에 내가 넣은 그림(court.jpg, portraits/wei_yan.jpg 등)
   → ZIP 에는 이런 파일이 애초에 들어 있지 않고, 아래 PROGRAM 목록에 있는 것만 덮어쓰므로 안전합니다.
+
+옛 버전이라 --update 가 없을 때 (윈도우 cmd, sangso 폴더에서 한 줄):
+  curl -L -o sangso_lib\update.py https://raw.githubusercontent.com/richdadtechtree/test/refs/heads/claude/zhuge-liang-daily-advice-1i5wmu/sangso_lib/update.py && py sangso_lib\update.py
+  → 이 파일만 먼저 받아서 직접 실행하면, 나머지를 모두 새로 고치고 지난 상소도 다시 그립니다.
 
 디버깅 힌트
   - "404" 가 나오면: 저장소가 비공개라 로그인 없이 못 받는 경우입니다. GitHub 에서 Code → Download ZIP 으로 받아
@@ -96,3 +100,17 @@ def run(base: Path) -> list[str]:
         dest.write_bytes(body)
         changed.append(rel)
     return changed
+
+
+if __name__ == "__main__":  # python sangso_lib/update.py 로 직접 실행했을 때
+    import subprocess
+    import sys
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    base = Path(__file__).resolve().parent.parent  # sangso_lib 의 한 단계 위 = 프로그램 폴더
+    try:
+        done = run(base)
+    except UpdateError as e:
+        print(e)
+        sys.exit(1)
+    print(f"새로 고친 파일 {len(done)}개: {', '.join(done) or '(없음 — 이미 최신)'}")
+    sys.exit(subprocess.call([sys.executable, str(base / "sangso.py"), "--redraw"]))

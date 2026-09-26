@@ -163,6 +163,11 @@ def main() -> int:
                              "견본", notice="견본 상소입니다. 실제 상소는 python sangso.py 로 쓰게 하십시오.",
                              filename="sample.html")
     elif today_html.exists() and not args.force:
+        # 이미 쓴 글은 그대로 두고, 화면만 지금 프로그램(템플릿·그림)으로 다시 그려서 엽니다.
+        # 그래야 업데이트한 뒤 옛 화면이 뜨는 일이 없습니다. (Claude 호출 없음, 1초 안쪽)
+        src = ARCHIVE / f"{today.isoformat()}.json"
+        if src.exists():
+            draw(json.loads(src.read_text(encoding="utf-8")), today, OUT, TEMPLATE, "클로드 코드")
         log.info("오늘 상소가 이미 있어 그대로 엽니다")
         page = today_html
     else:
