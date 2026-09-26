@@ -99,6 +99,7 @@ python sangso.py --sample     # Claude 호출 없이 견본으로 디자인만 �
 python sangso.py --no-open    # 창은 띄우지 않고 파일만 만든다
 python sangso.py --redraw     # 지난 상소들을 지금 디자인으로 다시 그린다
 python sangso.py --new-art    # 조회 장면 배경을 그림으로 새로 뽑는다 (기본은 SD 캐릭터 장면)
+python sangso.py --update     # GitHub의 최신 프로그램으로 새로 고친다 (내 기록·설정·그림은 그대로) + 지난 상소 다시 그림
 ```
 
 만들어진 상소는 `output/날짜.html`에, 원문 데이터는 `archive/날짜.json`에 쌓입니다.
